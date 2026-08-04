@@ -6,3 +6,5 @@ app = FastAPI(title="AI ")
 @app.get('/health')
 def read_root():
     return {"status":"ok"}
+
+
