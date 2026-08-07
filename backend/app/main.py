@@ -7,4 +7,3 @@ app = FastAPI(title="AI ")
 def read_root():
     return {"status":"ok"}
 
-
