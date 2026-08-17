@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 from uuid import UUID, uuid4
 
 from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text
@@ -92,4 +93,18 @@ class Scene(Base):
     storyboard = relationship(
         "Storyboard",
         back_populates="scenes",
+    )
+
+    generation_jobs: Mapped[List["GenerationJob"]] = relationship(
+        "GenerationJob",
+        back_populates="scene",
+        cascade="all, delete-orphan",
+        order_by="GenerationJob.created_at.desc()",
+    )
+
+    assets: Mapped[List["Asset"]] = relationship(
+        "Asset",
+        back_populates="scene",
+        cascade="all, delete-orphan",
+        order_by="Asset.version.asc()",
     )

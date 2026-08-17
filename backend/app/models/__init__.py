@@ -8,6 +8,8 @@ from app.models.creative_concept import CreativeConcept
 from app.models.storyboard import Storyboard
 from app.models.scene import Scene
 from app.models.creative_bible import CreativeBible
+from app.models.generation_job import GenerationJob
+from app.models.asset import Asset
 
 __all__ = [
     "User",
@@ -20,4 +22,6 @@ __all__ = [
     "Storyboard",
     "Scene",
     "CreativeBible",
+    "GenerationJob",
+    "Asset",
 ]
