@@ -11,6 +11,7 @@ from app.models.creative_bible import CreativeBible
 from app.models.generation_job import GenerationJob
 from app.models.asset import Asset
 from app.models.master_video import MasterVideo
+from app.models.asset_evaluation import AssetEvaluation
 
 __all__ = [
     "User",
@@ -26,4 +27,5 @@ __all__ = [
     "GenerationJob",
     "Asset",
     "MasterVideo",
+    "AssetEvaluation",
 ]

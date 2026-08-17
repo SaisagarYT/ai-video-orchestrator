@@ -104,3 +104,10 @@ class Asset(Base):
         "GenerationJob",
         back_populates="assets",
     )
+
+    evaluation = relationship(
+        "AssetEvaluation",
+        back_populates="asset",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
