@@ -110,3 +110,10 @@ class Campaign(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
+
+    final_videos: Mapped[List["FinalVideo"]] = relationship(
+        "FinalVideo",
+        back_populates="campaign",
+        cascade="all, delete-orphan",
+        order_by="FinalVideo.version.asc()",
+    )
