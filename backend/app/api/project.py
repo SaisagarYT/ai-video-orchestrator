@@ -3,7 +3,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.dependencies import get_current_user
 from app.db.session import get_db
+from app.models.user import User
 from app.schemas.project import (
     ProjectCreate,
     ProjectResponse,
@@ -23,15 +25,11 @@ service = ProjectService()
 def create_project(
     project: ProjectCreate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """
-    Temporary user_id until authentication is implemented.
-    """
-    user_id = UUID("11111111-1111-1111-1111-111111111111")
-
     return service.create_project(
         db=db,
-        user_id=user_id,
+        user_id=current_user.id,
         project=project,
     )
 
@@ -40,11 +38,13 @@ def create_project(
 def get_project(
     project_id: UUID,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     try:
         return service.get_project(
             db=db,
             project_id=project_id,
+            user_id=current_user.id,
         )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -53,8 +53,12 @@ def get_project(
 @router.get("/", response_model=list[ProjectResponse])
 def get_projects(
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    return service.get_projects(db)
+    return service.get_projects(
+        db=db,
+        user_id=current_user.id,
+    )
 
 
 @router.patch("/{project_id}", response_model=ProjectResponse)
@@ -62,11 +66,13 @@ def update_project(
     project_id: UUID,
     data: ProjectUpdate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     try:
         return service.update_project(
             db=db,
             project_id=project_id,
+            user_id=current_user.id,
             data=data,
         )
     except ValueError as e:
@@ -77,11 +83,13 @@ def update_project(
 def delete_project(
     project_id: UUID,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     try:
         service.delete_project(
             db=db,
             project_id=project_id,
+            user_id=current_user.id,
         )
 
         return {"message": "Project deleted successfully"}

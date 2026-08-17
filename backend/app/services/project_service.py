@@ -18,7 +18,6 @@ class ProjectService:
         user_id: UUID,
         project: ProjectCreate,
     ) -> Project:
-
         return self.repository.create_project(
             db=db,
             user_id=user_id,
@@ -29,11 +28,12 @@ class ProjectService:
         self,
         db: Session,
         project_id: UUID,
+        user_id: UUID,
     ) -> Project:
-
         project = self.repository.get_project_by_id(
             db=db,
             project_id=project_id,
+            user_id=user_id,
         )
 
         if project is None:
@@ -44,18 +44,21 @@ class ProjectService:
     def get_projects(
         self,
         db: Session,
+        user_id: UUID,
     ) -> list[Project]:
-
-        return self.repository.get_all_projects(db)
+        return self.repository.get_all_projects_by_user(
+            db=db,
+            user_id=user_id,
+        )
 
     def update_project(
         self,
         db: Session,
         project_id: UUID,
+        user_id: UUID,
         data: ProjectUpdate,
     ) -> Project:
-
-        project = self.get_project(db, project_id)
+        project = self.get_project(db, project_id, user_id=user_id)
 
         return self.repository.update_project(
             db=db,
@@ -67,9 +70,9 @@ class ProjectService:
         self,
         db: Session,
         project_id: UUID,
-    ):
-
-        project = self.get_project(db, project_id)
+        user_id: UUID,
+    ) -> None:
+        project = self.get_project(db, project_id, user_id=user_id)
 
         self.repository.delete_project(
             db=db,

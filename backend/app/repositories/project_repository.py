@@ -14,7 +14,6 @@ class ProjectRepository:
         user_id: UUID,
         project: ProjectCreate,
     ) -> Project:
-
         db_project = Project(
             user_id=user_id,
             title=project.title,
@@ -32,20 +31,19 @@ class ProjectRepository:
         self,
         db: Session,
         project_id: UUID,
+        user_id: UUID | None = None,
     ) -> Project | None:
+        query = db.query(Project).filter(Project.id == project_id)
+        if user_id is not None:
+            query = query.filter(Project.user_id == user_id)
+        return query.first()
 
-        return (
-            db.query(Project)
-            .filter(Project.id == project_id)
-            .first()
-        )
-
-    def get_all_projects(
+    def get_all_projects_by_user(
         self,
         db: Session,
+        user_id: UUID,
     ) -> list[Project]:
-
-        return db.query(Project).all()
+        return db.query(Project).filter(Project.user_id == user_id).all()
 
     def update_project(
         self,
@@ -53,7 +51,6 @@ class ProjectRepository:
         project: Project,
         data: ProjectUpdate,
     ) -> Project:
-
         update_data = data.model_dump(exclude_unset=True)
 
         for key, value in update_data.items():
@@ -69,6 +66,5 @@ class ProjectRepository:
         db: Session,
         project: Project,
     ) -> None:
-
         db.delete(project)
         db.commit()
