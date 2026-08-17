@@ -8,6 +8,7 @@ from app.api.generation import router as generation_router
 from app.api.project import router as project_router
 from app.api.storyboard import router as storyboard_router
 from app.api.strategy import router as strategy_router
+from app.api.timeline import router as timeline_router
 
 app = FastAPI(
     title="AI Video Orchestrator",
@@ -20,6 +21,7 @@ app.include_router(campaign_router)
 app.include_router(strategy_router)
 app.include_router(storyboard_router)
 app.include_router(generation_router)
+app.include_router(timeline_router)
 app.include_router(context_router)
 app.include_router(project_router)
 
