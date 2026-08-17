@@ -29,5 +29,8 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 60
 
+    # AI API Keys
+    GEMINI_API_KEY: str = ""
+
 
 settings = Settings()
