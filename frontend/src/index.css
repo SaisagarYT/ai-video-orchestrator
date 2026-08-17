@@ -1,1 +1,28 @@
 @import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-forest: #013F32;
+    --color-lime: #E7FE25;
+    --color-light: #FDFDFD;
+    --color-dark: #161616;
+  }
+
+  body {
+    background-color: var(--color-light);
+    color: var(--color-dark);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+.font-serif-display {
+  font-family: 'Playfair Display', serif;
+}
+
+.font-sans-body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
