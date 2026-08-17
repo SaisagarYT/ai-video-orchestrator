@@ -26,3 +26,32 @@
 .font-sans-body {
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
+
+/* Smooth Infinite Marquee Animations */
+@keyframes marquee-left {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-33.3333%);
+  }
+}
+
+@keyframes marquee-right {
+  0% {
+    transform: translateX(-33.3333%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+.animate-marquee-left {
+  animation: marquee-left 35s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-right {
+  animation: marquee-right 35s linear infinite;
+  will-change: transform;
+}

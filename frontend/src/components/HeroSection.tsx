@@ -36,14 +36,16 @@ export const HeroSection: React.FC = () => {
   }, []);
 
   return (
-    <section className="relative min-h-screen w-full bg-[#FDFDFD] text-[#161616] overflow-hidden flex flex-col justify-between pt-10 pb-10 px-6 select-none">
+    <section 
+      ref={contentRef}
+      className="relative min-h-screen w-full bg-[#FDFDFD] text-[#161616] overflow-hidden flex flex-col justify-between pt-10 pb-10 px-6 select-none"
+    >
       
       {/* Background Arc Carousel (Circle wheel rotating smoothly in background at z-10) */}
       <HeroArcCarousel />
 
       {/* Center Hero Content (Higher z-index z-30 with ambient radial clarity for maximum legibility) */}
       <div
-        ref={contentRef}
         className="relative z-30 max-w-3xl mx-auto w-full text-center my-auto pt-24 sm:pt-28 md:pt-32"
       >
         {/* Soft clarity backdrop to guarantee zero text obstruction */}
