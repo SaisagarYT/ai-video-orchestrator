@@ -89,3 +89,10 @@ class Storyboard(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
+
+    master_video = relationship(
+        "MasterVideo",
+        back_populates="storyboard",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )

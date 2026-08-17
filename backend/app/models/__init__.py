@@ -10,6 +10,7 @@ from app.models.scene import Scene
 from app.models.creative_bible import CreativeBible
 from app.models.generation_job import GenerationJob
 from app.models.asset import Asset
+from app.models.master_video import MasterVideo
 
 __all__ = [
     "User",
@@ -24,4 +25,5 @@ __all__ = [
     "CreativeBible",
     "GenerationJob",
     "Asset",
+    "MasterVideo",
 ]
