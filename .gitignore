@@ -2,3 +2,19 @@
 documents/
 Ref-Images/
 ref-images/
+
+# Progress and AI notes
+Progress.md
+**/Progress.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.env
+
+# Logs and scratch
+*.log
+scratch/
