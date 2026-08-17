@@ -66,3 +66,18 @@ User
 - CRUD Operations
 - SQLAlchemy Sessions
 - Transactions
+
+### ✅ Completed
+
+- Created Project Service
+- Connected Repository
+- Added CRUD business operations
+- Added project existence validation
+
+### Concepts Learned
+
+- Service Layer
+- Business Logic
+- Separation of Concerns
+- Repository Pattern
+

@@ -1,9 +1,17 @@
-from typing import Union
 from fastapi import FastAPI
 
-app = FastAPI(title="AI ")
+from app.api.project import router as project_router
 
-@app.get('/health')
-def read_root():
-    return {"status":"ok"}
+app = FastAPI(
+    title="AI Video Orchestrator",
+    version="1.0.0",
+)
 
+app.include_router(project_router)
+
+
+@app.get("/")
+def root():
+    return {
+        "message": "AI Video Orchestrator API"
+    }
