@@ -103,3 +103,10 @@ class Campaign(Base):
         back_populates="campaign",
         cascade="all, delete-orphan",
     )
+
+    storyboard = relationship(
+        "Storyboard",
+        back_populates="campaign",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )

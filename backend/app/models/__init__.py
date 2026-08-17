@@ -5,6 +5,9 @@ from app.models.campaign import Campaign
 from app.models.context_session import ContextSession
 from app.models.campaign_strategy import CampaignStrategy
 from app.models.creative_concept import CreativeConcept
+from app.models.storyboard import Storyboard
+from app.models.scene import Scene
+from app.models.creative_bible import CreativeBible
 
 __all__ = [
     "User",
@@ -14,4 +17,7 @@ __all__ = [
     "ContextSession",
     "CampaignStrategy",
     "CreativeConcept",
+    "Storyboard",
+    "Scene",
+    "CreativeBible",
 ]
