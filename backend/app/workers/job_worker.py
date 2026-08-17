@@ -69,7 +69,7 @@ class JobWorker:
 
             # Store compiled spec inside job parameters
             updated_params = dict(job.parameters or {})
-            updated_params["generation_specification"] = spec.model_dump()
+            updated_params["generation_specification"] = spec.model_dump(mode="json")
             job.parameters = updated_params
             db.commit()
 
