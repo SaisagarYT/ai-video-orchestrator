@@ -58,6 +58,7 @@ class GenerationService:
         job_worker.process_job_sync(job.id)
 
         # 5. Reload completed job with generated asset
+        db.expire_all()
         completed_job = self.repository.get_job_by_id(db=db, job_id=job.id, user_id=user_id)
 
         return GenerationJobResponse(
