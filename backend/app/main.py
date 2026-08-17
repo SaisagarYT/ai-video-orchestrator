@@ -7,6 +7,7 @@ from app.api.context_engine import router as context_router
 from app.api.evaluation import router as evaluation_router
 from app.api.generation import router as generation_router
 from app.api.project import router as project_router
+from app.api.render import router as render_router
 from app.api.storyboard import router as storyboard_router
 from app.api.strategy import router as strategy_router
 from app.api.timeline import router as timeline_router
@@ -24,6 +25,7 @@ app.include_router(storyboard_router)
 app.include_router(generation_router)
 app.include_router(evaluation_router)
 app.include_router(timeline_router)
+app.include_router(render_router)
 app.include_router(context_router)
 app.include_router(project_router)
 
