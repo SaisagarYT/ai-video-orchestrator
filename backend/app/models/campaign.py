@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import List, Optional
 
 from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID
@@ -88,4 +89,17 @@ class Campaign(Base):
     business: Mapped["Business"] = relationship(
         "Business",
         back_populates="campaigns",
+    )
+
+    strategy: Mapped[Optional["CampaignStrategy"]] = relationship(
+        "CampaignStrategy",
+        back_populates="campaign",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+
+    creative_concepts: Mapped[List["CreativeConcept"]] = relationship(
+        "CreativeConcept",
+        back_populates="campaign",
+        cascade="all, delete-orphan",
     )
