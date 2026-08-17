@@ -1,7 +1,7 @@
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
@@ -9,6 +9,7 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.asset import AssetResponse, AssetSelectResponse
 from app.schemas.generation import GenerationJobCreate, GenerationJobResponse
+from app.schemas.generation_spec import GenerationSpecification
 from app.services.generation_service import GenerationService
 
 router = APIRouter(
@@ -35,6 +36,32 @@ def generate_scene_asset(
             scene_id=scene_id,
             user_id=current_user.id,
             request=request,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+
+
+@router.get(
+    "/scenes/{scene_id}/specification",
+    response_model=GenerationSpecification,
+)
+def get_scene_generation_specification(
+    scene_id: UUID,
+    target_provider: str = Query(default="higgsfield"),
+    aspect_ratio: str = Query(default="9:16"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        return service.get_scene_specification(
+            db=db,
+            scene_id=scene_id,
+            user_id=current_user.id,
+            target_provider=target_provider,
+            aspect_ratio=aspect_ratio,
         )
     except ValueError as e:
         raise HTTPException(

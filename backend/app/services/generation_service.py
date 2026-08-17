@@ -1,14 +1,17 @@
 from typing import List
 from uuid import UUID
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.redis_client import redis_queue
+from app.models.campaign import Campaign
+from app.models.creative_bible import CreativeBible
 from app.models.scene import Scene
 from app.models.storyboard import Storyboard
-from app.models.campaign import Campaign
+from app.orchestration.prompt_compiler import prompt_compiler
 from app.repositories.generation_repository import GenerationRepository
 from app.schemas.asset import AssetResponse, AssetSelectResponse
 from app.schemas.generation import GenerationJobCreate, GenerationJobResponse
+from app.schemas.generation_spec import GenerationSpecification
 from app.workers.job_worker import job_worker
 
 
@@ -76,6 +79,34 @@ class GenerationService:
             assets=[AssetResponse.model_validate(a) for a in completed_job.assets],
         )
 
+    def get_scene_specification(
+        self,
+        db: Session,
+        scene_id: UUID,
+        user_id: UUID,
+        target_provider: str = "higgsfield",
+        aspect_ratio: str = "9:16",
+    ) -> GenerationSpecification:
+        scene = (
+            db.query(Scene)
+            .options(joinedload(Scene.storyboard).joinedload(Storyboard.creative_bible))
+            .join(Storyboard, Scene.storyboard_id == Storyboard.id)
+            .join(Campaign, Storyboard.campaign_id == Campaign.id)
+            .filter(Scene.id == scene_id, Campaign.user_id == user_id)
+            .first()
+        )
+        if scene is None:
+            raise ValueError("Scene not found or unauthorized")
+
+        creative_bible = scene.storyboard.creative_bible if scene.storyboard else None
+
+        return prompt_compiler.compile_scene_specification(
+            scene=scene,
+            creative_bible=creative_bible,
+            target_provider=target_provider,
+            aspect_ratio=aspect_ratio,
+        )
+
     def get_job_status(
         self,
         db: Session,
@@ -107,7 +138,6 @@ class GenerationService:
         scene_id: UUID,
         user_id: UUID,
     ) -> List[AssetResponse]:
-        # Validate Scene ownership
         scene = (
             db.query(Scene)
             .join(Storyboard, Scene.storyboard_id == Storyboard.id)
@@ -128,7 +158,6 @@ class GenerationService:
         asset_id: UUID,
         user_id: UUID,
     ) -> AssetSelectResponse:
-        # Validate Scene ownership
         scene = (
             db.query(Scene)
             .join(Storyboard, Scene.storyboard_id == Storyboard.id)
