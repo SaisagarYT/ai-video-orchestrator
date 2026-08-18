@@ -1,6 +1,8 @@
 from typing import Any, Dict, Tuple
 
+from app.core.config import settings
 from app.providers.audio.tts_provider import ElevenLabsAudioProvider
+
 from app.providers.base import (
     BaseAudioProvider,
     BaseImageProvider,
@@ -9,6 +11,7 @@ from app.providers.base import (
 )
 from app.providers.image.image_provider import FluxImageProvider
 from app.providers.text.gemini_provider import GeminiTextProvider
+from app.providers.text.omniroute_provider import OmniRouteTextProvider
 from app.providers.text.openai_provider import OpenAITextProvider
 from app.providers.video.higgsfield_provider import HiggsfieldVideoProvider
 
@@ -23,10 +26,12 @@ class ProviderRouter:
     def __init__(self):
         # Text Providers
         self.text_providers: Dict[str, BaseTextProvider] = {
+            "omniroute": OmniRouteTextProvider(),
             "gemini": GeminiTextProvider(),
             "openai": OpenAITextProvider(),
-            "default": GeminiTextProvider(),
+            "default": OmniRouteTextProvider() if settings.OMNIROUTE_API_KEY else GeminiTextProvider(),
         }
+
 
         # Video Providers
         self.video_providers: Dict[str, BaseVideoProvider] = {

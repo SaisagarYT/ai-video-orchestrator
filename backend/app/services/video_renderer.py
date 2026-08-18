@@ -1,17 +1,26 @@
+import io
 import os
 import subprocess
 import tempfile
+import urllib.parse
 from typing import Any, Dict, List, Tuple
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
+import requests
+
+from app.providers.audio.tts_provider import ElevenLabsAudioProvider
+from app.providers.image.image_provider import FluxImageProvider
 
 
 class VideoRenderer:
     """
     Production-Grade Visual Video Rendering Engine.
-    Draws high-resolution visual scene cards with brand gradients,
-    kinetic typography, shot badges, and animates them with camera motion (Ken Burns effect)
-    using FFmpeg into a 1080x1920 H.264 / AAC master commercial.
+    Draws photorealistic visual scene cards, animates with cinematic Ken Burns camera motion,
+    and synchronizes neural voiceover audio using FFmpeg into a 1080x1920 H.264 / AAC master commercial.
     """
+
+    def __init__(self):
+        self.image_provider = FluxImageProvider()
+        self.audio_provider = ElevenLabsAudioProvider()
 
     def _draw_scene_card(
         self,
@@ -23,55 +32,75 @@ class VideoRenderer:
         seq_num: int,
         total_seq: int,
     ) -> str:
-        img = Image.new("RGB", (1080, 1920), color="#121212")
+        width, height = 1080, 1920
+        # 1. Fetch or generate photorealistic AI image for background
+        bg_image_bytes, _ = self.image_provider.generate_image(
+            prompt=f"{prompt_text}, high commercial product advertisement, 8k resolution, cinematic lighting",
+            aspect_ratio="9:16",
+            seed=seq_num * 101,
+        )
+
+        try:
+            img = Image.open(io.BytesIO(bg_image_bytes)).convert("RGB")
+            img = img.resize((width, height), Image.Resampling.LANCZOS)
+        except Exception:
+            img = Image.new("RGB", (width, height), color="#10141e")
+
         draw = ImageDraw.Draw(img)
 
-        # 1. Header Gradient (#8B0000 Crimson to #FFD700 Gold)
-        for y in range(360):
-            r = int(139 + (255 - 139) * (y / 360))
-            g = int(0 + (215 - 0) * (y / 360))
-            b = int(0)
-            draw.line([(0, y), (1080, y)], fill=(r, g, b))
+        # 2. Draw Top Cinematic Header Overlay
+        overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+        overlay_draw = ImageDraw.Draw(overlay)
 
-        # Brand Header Text
-        draw.text((540, 110), f"★ {brand_name.upper()} ★", fill="#FFFFFF", anchor="mm")
-        draw.text((540, 190), "AUTHENTIC AI COMMERCIAL PRODUCTION", fill="#161616", anchor="mm")
+        # Top dark gradient
+        for y in range(300):
+            alpha = int(220 * (1 - y / 300))
+            overlay_draw.line([(0, y), (width, y)], fill=(10, 14, 25, alpha))
 
-        # 2. Scene Title Badge
-        draw.rectangle([(80, 420), (1000, 530)], fill="#222222", outline="#FFD700", width=3)
-        draw.text((540, 475), f"SCENE {seq_num} OF {total_seq} • {scene_title.upper()}", fill="#FFD700", anchor="mm")
+        # Bottom dark gradient for subtitle readability
+        for y in range(1300, 1920):
+            alpha = int(240 * ((y - 1300) / 620))
+            overlay_draw.line([(0, y), (width, y)], fill=(10, 14, 25, alpha))
 
-        # 3. Center Cinematic Visual Prompt Display Card
-        draw.rectangle([(80, 580), (1000, 1280)], fill="#1A1A1A", outline="#8B0000", width=4)
-        draw.text((540, 680), "🎬 35MM CINEMATIC VISUAL SHOT 🎬", fill="#FFD700", anchor="mm")
+        img.paste(Image.alpha_composite(Image.new("RGBA", (width, height), (0, 0, 0, 0)), overlay).convert("RGB"), (0, 0), overlay)
 
-        # Text wrapping for prompt
-        words = prompt_text.split()
+        # Re-initialize draw on final blended image
+        draw = ImageDraw.Draw(img)
+
+        # Brand Header
+        clean_brand = brand_name.upper() if brand_name else "PREMIUM BRAND"
+        draw.text((width // 2, 90), f"★  {clean_brand}  ★", fill="#FFD700", anchor="mm")
+        draw.text((width // 2, 140), "OFFICIAL COMMERCIAL PREVIEW", fill="#E2E8F0", anchor="mm")
+
+        # Scene Sequence Badge
+        draw.rectangle([(width // 2 - 220, 180), (width // 2 + 220, 230)], fill="#1E293B", outline="#06B6D4", width=2)
+        draw.text((width // 2, 205), f"SCENE {seq_num} OF {total_seq} • {scene_title.upper()}", fill="#38BDF8", anchor="mm")
+
+        # Voice-over Subtitle Box at Bottom
+        draw.rectangle([(60, 1420), (width - 60, 1620)], fill="#0B0F19", outline="#3B82F6", width=3)
+        draw.text((width // 2, 1460), "🎙️ AI NEURAL VOICEOVER", fill="#38BDF8", anchor="mm")
+
+        clean_narration = narration_text if narration_text else "Discover extraordinary design and unmatched performance."
+        # Wrap narration
+        words = clean_narration.split()
         lines = []
         curr = []
         for w in words:
             curr.append(w)
-            if len(" ".join(curr)) > 34:
+            if len(" ".join(curr)) > 36:
                 lines.append(" ".join(curr))
                 curr = []
         if curr:
             lines.append(" ".join(curr))
 
-        y_pos = 790
-        for l in lines[:7]:
-            draw.text((540, y_pos), l, fill="#FFFFFF", anchor="mm")
-            y_pos += 52
+        y_sub = 1510
+        for line in lines[:2]:
+            draw.text((width // 2, y_sub), f"\"{line}\"", fill="#FFFFFF", anchor="mm")
+            y_sub += 40
 
-        # 4. Voice-over Narration Subtitle Box
-        draw.rectangle([(80, 1340), (1000, 1560)], fill="#000000", outline="#FFD700", width=2)
-        draw.text((540, 1380), "🎙️ VOICE-OVER NARRATION", fill="#FFD700", anchor="mm")
-        narration_clean = narration_text if narration_text else "Experience the authentic taste and tradition."
-        draw.text((540, 1470), f"\"{narration_clean[:65]}...\"", fill="#E8E8E8", anchor="mm")
-
-        # 5. Call To Action Button
-        draw.rectangle([(120, 1640), (960, 1780)], fill="#FFD700")
-        cta_label = cta_text if cta_text else "ORDER NOW"
-        draw.text((540, 1710), f"👉 {cta_label.upper()}", fill="#000000", anchor="mm")
+        # Call To Action Button (Final Payoff)
+        draw.rectangle([(120, 1680), (width - 120, 1800)], fill="#E7FE25")
+        draw.text((width // 2, 1740), f"👉  {cta_text.upper()}  ⚡", fill="#000000", anchor="mm")
 
         temp_img = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
         img.save(temp_img.name)
@@ -81,7 +110,7 @@ class VideoRenderer:
         self,
         timeline_data: Dict[str, Any],
     ) -> Tuple[bytes, float, int, str]:
-        duration = max(1.0, float(timeline_data.get("duration", 60.0)))
+        duration = max(1.0, float(timeline_data.get("duration", 20.0)))
         resolution = timeline_data.get("resolution", "1080x1920")
         tracks = timeline_data.get("tracks", {})
         video_items = tracks.get("video_track", {}).get("items", [])
@@ -94,19 +123,19 @@ class VideoRenderer:
         try:
             if video_items:
                 for idx, item in enumerate(video_items, start=1):
-                    clip_dur = item.get("duration", duration / total_scenes)
+                    clip_dur = max(2.5, float(item.get("duration", duration / total_scenes)))
                     prompt = item.get("asset_url", f"Scene {idx} Visual Shot")
                     narration = ""
-                    # find narration
+                    # Match narration from voice track
                     for v in tracks.get("voice_track", {}).get("items", []):
                         if v.get("scene_id") == item.get("scene_id"):
                             narration = v.get("narration", "")
                             break
 
                     card_path = self._draw_scene_card(
-                        brand_name="Bawarchi Firewood Biryani",
+                        brand_name="AI Video Studio",
                         scene_title=f"Shot {idx}",
-                        prompt_text=prompt if "mock" not in prompt else "Cinematic extreme close-up of steaming saffron basmati dum biryani with marinated tender spiced meat in clay pot",
+                        prompt_text=narration if narration else prompt,
                         narration_text=narration,
                         cta_text=cta_text,
                         seq_num=idx,
@@ -114,15 +143,26 @@ class VideoRenderer:
                     )
                     temp_files_to_cleanup.append(card_path)
 
+                    # Generate authentic neural voiceover audio for this scene
+                    audio_bytes, _ = self.audio_provider.generate_audio(
+                        narration_text=narration if narration else "Experience perfection.",
+                        voice_profile="Professional",
+                    )
+                    audio_path = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False).name
+                    with open(audio_path, "wb") as f_aud:
+                        f_aud.write(audio_bytes)
+                    temp_files_to_cleanup.append(audio_path)
+
                     clip_out = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False).name
                     temp_files_to_cleanup.append(clip_out)
 
-                    # Animate scene card with Ken Burns slow zoom
+                    # Animate with Ken Burns zoom & blend real neural voice audio
+                    total_frames = int(clip_dur * 30)
                     cmd = [
                         "ffmpeg", "-y",
                         "-loop", "1", "-i", card_path,
-                        "-f", "lavfi", "-i", f"sine=f=440:r=44100:d={clip_dur}",
-                        "-vf", f"zoompan=z='min(zoom+0.0006,1.12)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={int(clip_dur*30)}:s={resolution}:fps=30",
+                        "-i", audio_path,
+                        "-vf", f"zoompan=z='min(zoom+0.0008,1.20)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={total_frames}:s={resolution}:fps=30",
                         "-c:v", "libx264",
                         "-preset", "ultrafast",
                         "-pix_fmt", "yuv420p",
@@ -133,7 +173,7 @@ class VideoRenderer:
                     subprocess.run(cmd, capture_output=True, check=True)
                     rendered_clips.append(clip_out)
 
-            # Concatenate all scene clips into Master Video
+            # Concatenate all scene clips into Master Commercial Video
             master_out = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False).name
             temp_files_to_cleanup.append(master_out)
 
@@ -153,16 +193,16 @@ class VideoRenderer:
                 ]
                 subprocess.run(concat_cmd, capture_output=True, check=True)
             else:
-                # Single card fallback
+                # Single fallback card
                 single_card = self._draw_scene_card(
-                    "Bawarchi Firewood Biryani", "Commercial Showcase", "Master Advertisement", "", cta_text, 1, 1
+                    "AI Video Studio", "Commercial", "Master Commercial", "", cta_text, 1, 1
                 )
                 temp_files_to_cleanup.append(single_card)
                 single_cmd = [
                     "ffmpeg", "-y",
                     "-loop", "1", "-i", single_card,
                     "-f", "lavfi", "-i", f"sine=f=440:r=44100:d={duration}",
-                    "-vf", f"zoompan=z='min(zoom+0.0006,1.12)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={int(duration*30)}:s={resolution}:fps=30",
+                    "-vf", f"zoompan=z='min(zoom+0.0008,1.15)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={int(duration*30)}:s={resolution}:fps=30",
                     "-c:v", "libx264",
                     "-preset", "ultrafast",
                     "-pix_fmt", "yuv420p",
@@ -187,3 +227,4 @@ class VideoRenderer:
 
 
 video_renderer = VideoRenderer()
+
