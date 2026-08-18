@@ -14,7 +14,8 @@ import { CreativeBibleSummaryDeck } from '../components/CreativeBibleSummaryDeck
 import { SceneGridPreview } from '../components/SceneGridPreview';
 import { StageNavigationGrid } from '../components/StageNavigationGrid';
 import { useAppStore } from '../../../store/useAppStore';
-import { Input, Label } from '../../../components/ui';
+import { Button, Input, Label } from '../../../components/ui';
+import { Trash2 } from 'lucide-react';
 
 // UUID validation helper
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -36,6 +37,8 @@ export function CampaignControlCenterView() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isInvalidId, setIsInvalidId] = useState<boolean>(false);
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   const fetchWorkspace = useCallback(async () => {
     if (!campaignId) return;
@@ -68,11 +71,23 @@ export function CampaignControlCenterView() {
     fetchWorkspace();
   }, [fetchWorkspace]);
 
+  const handleDelete = async () => {
+    if (!campaignId) return;
+    setIsDeleting(true);
+    try {
+      await api.delete(`/campaigns/${campaignId}`);
+      navigate('/campaigns', { replace: true });
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to delete campaign');
+      setIsDeleting(false);
+    }
+  };
+
   const currentSection = (section || 'overview') as CampaignSection;
 
   if (isLoading) {
     return (
-      <div className="flex-1 p-6 bg-[var(--bg-app)]">
+      <div className="flex-1 p-6 flex flex-col items-center justify-center bg-[var(--bg-app)]">
         <WorkspaceLoadingSkeleton />
       </div>
     );
@@ -128,6 +143,11 @@ export function CampaignControlCenterView() {
         status={campaign.status}
         metadata={`${scenes.length} Scenes • ${campaign.duration_seconds || 60}s Duration • ${campaign.aspect_ratio || '16:9'} Format`}
         breadcrumbs={breadcrumbs}
+        secondaryAction={{
+          label: 'Delete',
+          onClick: () => setShowDeleteModal(true),
+          icon: <Trash2 className="h-3.5 w-3.5 text-red-400" />,
+        }}
         primaryAction={{
           label: progress.final_rendered ? 'Download Master Video' : 'Run Pipeline Step',
           onClick: () => navigate(`/campaigns/${campaignId}/final`),
@@ -173,10 +193,63 @@ export function CampaignControlCenterView() {
                 <Label className="text-[11px]">Total Scenes</Label>
                 <Input value={`${scenes.length} Shots Compiled`} readOnly className="h-8 text-xs font-mono-code bg-[var(--bg-surface-elevated)]" />
               </div>
+
+              <div className="pt-4 border-t border-[var(--border-subtle)]">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setShowDeleteModal(true)}
+                  leftIcon={<Trash2 className="h-3.5 w-3.5" />}
+                >
+                  Delete Campaign
+                </Button>
+              </div>
             </div>
           </ContextualPanel>
         }
       >
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
+            <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-[var(--radius-xl)] max-w-md w-full p-6 space-y-5 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center gap-3 text-red-500">
+                <div className="h-10 w-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                  <Trash2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-[var(--text-primary)]">Delete Campaign</h3>
+                  <p className="text-xs text-[var(--text-muted)]">This action cannot be undone.</p>
+                </div>
+              </div>
+
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                Are you sure you want to delete <strong className="text-[var(--text-primary)] font-semibold">"{campaign.name}"</strong>? All associated scenes, assets, and rendered videos will be permanently removed.
+              </p>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDelete}
+                  isLoading={isDeleting}
+                  leftIcon={<Trash2 className="h-3.5 w-3.5" />}
+                >
+                  Delete Campaign
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-6 max-w-7xl mx-auto pb-8">
           {/* A. Visual 9-Stage Pipeline Progress Stepper */}
           <PipelineProgressStepper campaignId={campaignId || ''} progress={progress} />

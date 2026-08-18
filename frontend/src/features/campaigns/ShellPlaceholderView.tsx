@@ -3,8 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { WorkspaceContainer } from '../../components/layout/workspace/WorkspaceContainer';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { WorkspaceLoadingSkeleton } from '../../components/ui/LoadingState';
-import { ErrorState } from '../../components/ui/ErrorState';
+import { ErrorState, AuthRequiredState } from '../../components/ui/ErrorState';
 import { CampaignHeader } from '../../components/layout/workspace/CampaignHeader';
+
 import { CampaignNavTabs, type CampaignSection } from '../navigation/CampaignNavTabs';
 import { ContextualPanel } from '../../components/layout/contextual-panel/ContextualPanel';
 import { useAppStore } from '../../store/useAppStore';
@@ -23,6 +24,7 @@ import {
   Square,
   Film,
   Maximize2,
+  Trash2,
 } from 'lucide-react';
 import {
   Card,
@@ -54,6 +56,8 @@ export function CampaignsListView() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterFormat, setFilterFormat] = useState<string>('all');
+  const [campaignToDelete, setCampaignToDelete] = useState<CampaignItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   const fetchCampaigns = async () => {
     setIsLoading(true);
@@ -71,6 +75,21 @@ export function CampaignsListView() {
       setIsLoading(false);
     }
   };
+
+  const handleDeleteCampaign = async () => {
+    if (!campaignToDelete) return;
+    setIsDeleting(true);
+    try {
+      await api.delete(`/campaigns/${campaignToDelete.id}`);
+      setCampaigns((prev) => prev.filter((c) => c.id !== campaignToDelete.id));
+      setCampaignToDelete(null);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to delete campaign');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
 
   useEffect(() => {
     fetchCampaigns();
@@ -150,13 +169,22 @@ export function CampaignsListView() {
 
         {/* Error State */}
         {!isLoading && error && (
-          <ErrorState
-            title="Failed to load campaigns"
-            description="Unable to connect to the backend server to retrieve campaigns."
-            error={error}
-            onRetry={fetchCampaigns}
-          />
+          error.includes('401') || error.toLowerCase().includes('unauthorized') ? (
+            <AuthRequiredState
+              title="Authentication Required"
+              description="Please sign in or create an account to view and manage your video campaigns."
+              onLogin={() => navigate('/login')}
+            />
+          ) : (
+            <ErrorState
+              title="Failed to load campaigns"
+              description="Unable to connect to the backend server to retrieve campaigns."
+              error={error}
+              onRetry={fetchCampaigns}
+            />
+          )
         )}
+
 
         {/* Empty State (When 0 campaigns exist in database) */}
         {!isLoading && !error && campaigns.length === 0 && (
@@ -234,8 +262,21 @@ export function CampaignsListView() {
                       <span className="text-[11px] font-medium text-white/90">
                         {camp.category || 'Commercial Video'}
                       </span>
-                      <div className="h-8 w-8 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center group-hover:scale-110 group-hover:bg-[var(--brand-lime)] group-hover:text-[#161616] transition-all shadow-md">
-                        <Play className="h-3.5 w-3.5 ml-0.5 fill-current" />
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCampaignToDelete(camp);
+                          }}
+                          className="h-8 w-8 rounded-full bg-black/40 hover:bg-red-600/90 text-white/70 hover:text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-md"
+                          title="Delete Campaign"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                        <div className="h-8 w-8 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center group-hover:scale-110 group-hover:bg-[var(--brand-lime)] group-hover:text-[#161616] transition-all shadow-md">
+                          <Play className="h-3.5 w-3.5 ml-0.5 fill-current" />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -266,12 +307,54 @@ export function CampaignsListView() {
                 </div>
               ))}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {campaignToDelete && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
+                <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-[var(--radius-xl)] max-w-md w-full p-6 space-y-5 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+                  <div className="flex items-center gap-3 text-red-500">
+                    <div className="h-10 w-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                      <Trash2 className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-base text-[var(--text-primary)]">Delete Campaign</h3>
+                      <p className="text-xs text-[var(--text-muted)]">This action cannot be undone.</p>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                    Are you sure you want to delete <strong className="text-[var(--text-primary)] font-semibold">"{campaignToDelete.name}"</strong>? All generated scenes, storyboards, timeline tracks, and rendered videos will be permanently removed.
+                  </p>
+
+                  <div className="flex items-center justify-end gap-3 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCampaignToDelete(null)}
+                      disabled={isDeleting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDeleteCampaign}
+                      isLoading={isDeleting}
+                      leftIcon={<Trash2 className="h-3.5 w-3.5" />}
+                    >
+                      Delete Campaign
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
       </WorkspaceContainer>
     </div>
   );
 }
+
 
 export function CampaignDetailWorkspaceView() {
   const { campaignId, section = 'overview' } = useParams<{ campaignId: string; section: CampaignSection }>();
