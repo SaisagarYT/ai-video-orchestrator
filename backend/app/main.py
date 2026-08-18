@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.core.config import settings
+from app.core.middleware import CSRFProtectionMiddleware, SecurityHeadersMiddleware
 from app.api.auth import router as auth_router
 from app.api.business import router as business_router
 from app.api.campaign import router as campaign_router
@@ -20,10 +22,25 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Enable CORS for frontend clients
+# OWASP Security Headers Middleware
+app.add_middleware(SecurityHeadersMiddleware)
+
+# CSRF Origin/Referer Validation Middleware
+app.add_middleware(CSRFProtectionMiddleware)
+
+# Strict CORS configuration for credentialed cookie authentication
+allowed_origins = list(settings.CORS_ALLOWED_ORIGINS)
+if settings.DEBUG:
+    for dev_origin in [
+        "http://localhost:5173", "http://127.0.0.1:5173",
+        "http://localhost:3000", "http://127.0.0.1:3000",
+    ]:
+        if dev_origin not in allowed_origins:
+            allowed_origins.append(dev_origin)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
