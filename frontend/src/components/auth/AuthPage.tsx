@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface AuthPageProps {
-  onClose: () => void;
+  onClose?: () => void;
   initialMode?: 'login' | 'register';
 }
 
-export function AuthPage({ onClose, initialMode = 'register' }: AuthPageProps) {
-  const { login, register } = useAuth();
+export function AuthPage({ onClose, initialMode = 'login' }: AuthPageProps) {
+  const { login, register, isAuthenticated } = useAuth();
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
+  const navigate = useNavigate();
 
   // Form Fields matching Backend Schemas
-  // backend RegisterRequest: full_name (min_length=2), email (EmailStr), password (min_length=8)
-  // backend LoginRequest: email (EmailStr), password (str)
   const [firstName, setFirstName] = useState<string>('');
   const [lastName, setLastName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
@@ -24,6 +24,14 @@ export function AuthPage({ onClose, initialMode = 'register' }: AuthPageProps) {
   // Status State
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Auto-redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (onClose) onClose();
+      navigate('/campaigns', { replace: true });
+    }
+  }, [isAuthenticated, navigate, onClose]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +59,9 @@ export function AuthPage({ onClose, initialMode = 'register' }: AuthPageProps) {
         const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
         await register(fullName, email.trim(), password);
       }
-      onClose();
+      if (onClose) onClose();
+      // Automatically redirect logged-in user to the workspace dashboard
+      navigate('/campaigns', { replace: true });
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -77,15 +87,24 @@ export function AuthPage({ onClose, initialMode = 'register' }: AuthPageProps) {
     }
   };
 
+  const handleBack = () => {
+    if (onClose) {
+      onClose();
+    } else {
+      navigate('/campaigns');
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-[#060606] p-3 sm:p-4 flex items-center justify-center font-app overflow-hidden box-border select-none">
       {/* Back button */}
       <button
-        onClick={onClose}
+        type="button"
+        onClick={handleBack}
         className="absolute top-6 left-6 z-30 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#141414]/90 hover:bg-[#202020] text-xs text-[#868E96] hover:text-white border border-[#2A2A2A] transition-all cursor-pointer backdrop-blur-md shadow-lg"
       >
         <ArrowLeft className="h-4 w-4" />
-        <span>Back to Showcase</span>
+        <span>Back to Workspace</span>
       </button>
 
       {/* Main Full-Size Card */}
@@ -104,7 +123,7 @@ export function AuthPage({ onClose, initialMode = 'register' }: AuthPageProps) {
               with Us
             </h2>
             <p className="text-xs sm:text-sm text-white/70 max-w-sm leading-relaxed">
-              Complete these easy steps to register your account.
+              Complete these easy steps to register your account and launch autonomous video campaigns.
             </p>
           </div>
 
@@ -218,7 +237,7 @@ export function AuthPage({ onClose, initialMode = 'register' }: AuthPageProps) {
               )}
             </AnimatePresence>
 
-            {/* Form Fields: Strictly Matching Backend Schema */}
+            {/* Form Fields */}
             <form onSubmit={handleSubmit} className="space-y-4.5">
               {mode === 'register' && (
                 <div className="grid grid-cols-2 gap-3.5">
@@ -296,7 +315,7 @@ export function AuthPage({ onClose, initialMode = 'register' }: AuthPageProps) {
                 )}
               </div>
 
-              {/* Submit Button: Solid White Pill */}
+              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isLoading}
