@@ -2,20 +2,23 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus,
-  Search,
+  ArrowUp,
+  Zap,
   Sparkles,
-  ArrowRight,
-  Clock,
+  ChevronDown,
+  Wand2,
   Film,
+  Upload,
+  Download,
+  RotateCcw,
+  Bookmark,
   Trash2,
-  Monitor,
-  Smartphone,
-  Square,
+  ArrowRight,
+  X,
 } from 'lucide-react';
 import { api } from '../../../lib/api';
 import { WorkspaceContainer } from '../../../components/layout/workspace/WorkspaceContainer';
-import { WorkspaceLoadingSkeleton } from '../../../components/ui/LoadingState';
-import { Button, Badge } from '../../../components/ui';
+import { Button } from '../../../components/ui';
 
 interface CampaignItem {
   id: string;
@@ -27,18 +30,62 @@ interface CampaignItem {
   target_platforms?: string;
   created_at?: string;
   updated_at?: string;
-  current_stage?: number;
-  stage_label?: string;
-  next_action_label?: string;
-  next_action_route?: string;
 }
+
+const SHOWCASE_PRESETS = [
+  {
+    id: 'p1',
+    title: 'LOW-ANGLE RUNNER',
+    category: 'Marketing',
+    tag: 'LOW-ANGLE',
+    model: 'Seedance 2.5',
+    prompt: 'High-speed dynamic low-angle tracking shot of carbon running shoes hitting wet asphalt with water droplets splashing in macro slow-motion.',
+    aspectRatio: '16:9',
+    bgColor: 'from-[#0E281E] to-[#05110C]',
+    accentColor: '#10B981',
+  },
+  {
+    id: 'p2',
+    title: 'CROWD PERSPECTIVE',
+    category: 'Explainer videos',
+    tag: 'CROWD CONTROL',
+    model: 'Kling 3.0 Omni',
+    prompt: 'Surreal cinematic gallery with golden picture frame floating over a synchronized monochrome crowd under ambient overhead lighting.',
+    aspectRatio: '16:9',
+    bgColor: 'from-[#2A2315] to-[#120F08]',
+    accentColor: '#F59E0B',
+  },
+  {
+    id: 'p3',
+    title: 'ANIME TRANSFORMATION',
+    category: 'Apps',
+    tag: 'DYNAMIC ANIME',
+    model: 'Gemini Omni Flash',
+    prompt: 'Stylized high-contrast anime protagonist illuminated by radiant neon reflections as blue lightning energy surges around glasses.',
+    aspectRatio: '16:9',
+    bgColor: 'from-[#0F2236] to-[#060D17]',
+    accentColor: '#3B82F6',
+  },
+];
+
+const AI_MODELS = [
+  { id: 'v4-flash', name: '⚡ V4 Flash Manual', badge: 'Fastest' },
+  { id: 'seedance-2.5', name: 'Seedance 2.5 Pro', badge: 'Exclusive' },
+  { id: 'kling-3.0', name: 'Kling 3.0 Omni Edit', badge: 'Ultra Quality' },
+  { id: 'gemini-omni', name: 'Gemini Omni Flash', badge: 'New' },
+];
 
 export function CampaignWorkspaceHubView() {
   const navigate = useNavigate();
+
   const [campaigns, setCampaigns] = useState<CampaignItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [filterFormat, setFilterFormat] = useState<string>('all');
+  const [promptInput, setPromptInput] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [selectedModel, setSelectedModel] = useState<string>('⚡ V4 Flash Manual');
+  const [modelDropdownOpen, setModelDropdownOpen] = useState<boolean>(false);
+  const [mediaModalOpen, setMediaModalOpen] = useState<boolean>(false);
+  const [mediaTab, setMediaTab] = useState<'Uploads' | 'Elements' | 'Image Generations' | 'Video Generations' | 'Audio'>('Uploads');
   const [campaignToDelete, setCampaignToDelete] = useState<CampaignItem | null>(null);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
@@ -58,6 +105,11 @@ export function CampaignWorkspaceHubView() {
     fetchCampaigns();
   }, []);
 
+  const handleLaunchPrompt = () => {
+    if (!promptInput.trim()) return;
+    navigate('/campaigns/new');
+  };
+
   const handleDelete = async () => {
     if (!campaignToDelete) return;
     setIsDeleting(true);
@@ -72,349 +124,399 @@ export function CampaignWorkspaceHubView() {
     }
   };
 
-  // Helper to compute pipeline stage and next action
-  const getPipelineMeta = (campaign: CampaignItem) => {
-    const s = (campaign.status || 'draft').toLowerCase();
-
-    if (s.includes('completed') || s.includes('rendered') || s.includes('final')) {
-      return {
-        stageNumber: 9,
-        stageLabel: 'Stage 9: Final Review & Export',
-        nextActionLabel: 'Review & Export Master Video',
-        nextActionRoute: `/campaigns/${campaign.id}/review`,
-        badgeVariant: 'success' as const,
-      };
-    }
-    if (s.includes('render')) {
-      return {
-        stageNumber: 8,
-        stageLabel: 'Stage 8: Master Compilation',
-        nextActionLabel: 'View Render Status',
-        nextActionRoute: `/campaigns/${campaign.id}/render`,
-        badgeVariant: 'warning' as const,
-      };
-    }
-    if (s.includes('timeline')) {
-      return {
-        stageNumber: 7,
-        stageLabel: 'Stage 7: Multi-Track Timeline',
-        nextActionLabel: 'Trigger 4K Master Render',
-        nextActionRoute: `/campaigns/${campaign.id}/timeline`,
-        badgeVariant: 'default' as const,
-      };
-    }
-    if (s.includes('evaluat') || s.includes('qa') || s.includes('scene_ready')) {
-      return {
-        stageNumber: 6,
-        stageLabel: 'Stage 6: Consistency & QA',
-        nextActionLabel: 'Review QA & Assemble Timeline',
-        nextActionRoute: `/campaigns/${campaign.id}/evaluation`,
-        badgeVariant: 'default' as const,
-      };
-    }
-    if (s.includes('scene') || s.includes('generation')) {
-      return {
-        stageNumber: 5,
-        stageLabel: 'Stage 5: Scene Generation',
-        nextActionLabel: 'Generate Scene Assets',
-        nextActionRoute: `/campaigns/${campaign.id}/scenes`,
-        badgeVariant: 'default' as const,
-      };
-    }
-    if (s.includes('storyboard')) {
-      return {
-        stageNumber: 4,
-        stageLabel: 'Stage 4: Storyboard Shots',
-        nextActionLabel: 'Review Script & Generate Scenes',
-        nextActionRoute: `/campaigns/${campaign.id}/storyboard`,
-        badgeVariant: 'default' as const,
-      };
-    }
-    if (s.includes('concept')) {
-      return {
-        stageNumber: 3,
-        stageLabel: 'Stage 3: Concept Selection',
-        nextActionLabel: 'Select Winning Concept',
-        nextActionRoute: `/campaigns/${campaign.id}/concepts`,
-        badgeVariant: 'default' as const,
-      };
-    }
-    if (s.includes('strategy')) {
-      return {
-        stageNumber: 2,
-        stageLabel: 'Stage 2: Strategy Synthesis',
-        nextActionLabel: 'Explore Creative Concepts',
-        nextActionRoute: `/campaigns/${campaign.id}/strategy`,
-        badgeVariant: 'default' as const,
-      };
-    }
-
-    // Default: Stage 1 Brief
-    return {
-      stageNumber: 1,
-      stageLabel: 'Stage 1: Creative Brief',
-      nextActionLabel: 'Generate AI Strategy',
-      nextActionRoute: `/campaigns/${campaign.id}/brief`,
-      badgeVariant: 'default' as const,
-    };
-  };
-
-  const filteredCampaigns = campaigns.filter((c) => {
-    const matchesSearch = c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.product_name?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFormat = filterFormat === 'all' || (c.target_platforms || '').includes(filterFormat);
-    return matchesSearch && matchesFormat;
-  });
+  const filteredPresets = SHOWCASE_PRESETS.filter(
+    (p) => selectedCategory === 'All' || p.category.toLowerCase().includes(selectedCategory.toLowerCase())
+  );
 
   return (
-    <WorkspaceContainer layoutMode="full-width">
-      <div className="max-w-6xl mx-auto space-y-7 pb-12">
-        {/* Workspace Action Toolbar */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-[#0E0E0E] border border-[#1C1C1C]">
-          {/* Search */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#666]" />
-            <input
-              type="text"
-              placeholder="Search campaigns, products, or hooks..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-10 pl-10 pr-4 rounded-xl bg-[#141414] border border-[#242424] text-xs text-white placeholder:text-[#555] focus:outline-none focus:border-[#E7FE25]"
-            />
+    <WorkspaceContainer layoutMode="full-width" className="p-4 sm:p-6 lg:p-10 space-y-12 max-w-6xl mx-auto select-none">
+      {/* 1. HERO SECTION: "WHAT ARE WE CREATING TODAY?" */}
+      <div className="text-center space-y-7 pt-4">
+        {/* Header with Lime Icon (from Screenshot 1) */}
+        <div className="inline-flex items-center gap-3">
+          <div className="h-9 w-9 rounded-xl bg-[#E7FE25] flex items-center justify-center text-black font-black text-lg shadow-lg">
+            ⚡
           </div>
-
-          {/* Format Filter Tabs & Create Button */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#141414] border border-[#222]">
-              <button
-                type="button"
-                onClick={() => setFilterFormat('all')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                  filterFormat === 'all' ? 'bg-white text-black' : 'text-[#888] hover:text-white'
-                }`}
-              >
-                All Formats
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilterFormat('16:9')}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                  filterFormat === '16:9' ? 'bg-white text-black' : 'text-[#888] hover:text-white'
-                }`}
-              >
-                <Monitor className="h-3 w-3" />
-                16:9
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilterFormat('9:16')}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                  filterFormat === '9:16' ? 'bg-white text-black' : 'text-[#888] hover:text-white'
-                }`}
-              >
-                <Smartphone className="h-3 w-3" />
-                9:16
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilterFormat('1:1')}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                  filterFormat === '1:1' ? 'bg-white text-black' : 'text-[#888] hover:text-white'
-                }`}
-              >
-                <Square className="h-3 w-3" />
-                1:1
-              </button>
-            </div>
-
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => navigate('/campaigns/new')}
-              leftIcon={<Plus className="h-4 w-4" />}
-              className="font-bold shadow-md"
-            >
-              New Campaign
-            </Button>
-          </div>
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white uppercase">
+            WHAT ARE WE CREATING TODAY?
+          </h1>
         </div>
 
-        {/* Loading State */}
-        {isLoading && <WorkspaceLoadingSkeleton />}
+        {/* 2. CENTRAL OMNIBAR / PROMPT BOX (from Screenshot 1) */}
+        <div className="max-w-2xl mx-auto rounded-3xl bg-[#121212] border border-[#242424] hover:border-[#383838] transition-all shadow-2xl p-4 sm:p-5 space-y-3 relative text-left">
+          <span className="text-[11px] font-bold text-[#666666] uppercase tracking-wider block">
+            Create
+          </span>
 
-        {/* ZERO-STATE WORKBENCH */}
-        {!isLoading && campaigns.length === 0 && (
-          <div className="p-10 sm:p-14 rounded-3xl bg-gradient-to-b from-[#111111] to-[#0A0A0A] border border-[#222] text-center space-y-6 max-w-2xl mx-auto shadow-2xl">
-            <div className="h-16 w-16 mx-auto rounded-2xl bg-gradient-to-tr from-[#013F32] to-[#025745] border border-emerald-500/30 flex items-center justify-center text-[#E7FE25] shadow-lg">
-              <Sparkles className="h-8 w-8" />
-            </div>
+          <textarea
+            rows={3}
+            value={promptInput}
+            onChange={(e) => setPromptInput(e.target.value)}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                handleLaunchPrompt();
+              }
+            }}
+            placeholder="Describe what you want to create, paste a product URL, or select skills..."
+            className="w-full bg-transparent text-sm text-white placeholder:text-[#555] focus:outline-none resize-none leading-relaxed"
+          />
 
-            <div className="space-y-2">
-              <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                Create Your First Advertisement
-              </h3>
-              <p className="text-sm text-[#888888] max-w-md mx-auto leading-relaxed">
-                Launch an autonomous video production in minutes. Enter your product link or brief, and let KANGGIRD engineer your commercial from concept to timeline.
-              </p>
-            </div>
-
-            <div className="pt-2">
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={() => navigate('/campaigns/new')}
-                className="font-bold text-sm px-8 shadow-xl"
-                rightIcon={<ArrowRight className="h-4 w-4" />}
+          {/* Omnibar Inner Toolbar */}
+          <div className="flex items-center justify-between pt-2 border-t border-[#1C1C1C]">
+            <div className="flex items-center gap-2">
+              {/* Media Plus Button */}
+              <button
+                type="button"
+                onClick={() => setMediaModalOpen(true)}
+                className="h-8 w-8 rounded-full bg-[#1C1C1C] hover:bg-[#282828] text-white flex items-center justify-center transition-colors cursor-pointer"
+                title="Add Media / Reference"
               >
-                Start Creative Brief
-              </Button>
-            </div>
-          </div>
-        )}
+                <Plus className="h-4 w-4" />
+              </button>
 
-        {/* CONTINUATION HUB: ACTIVE PRODUCTION CAMPAIGNS */}
-        {!isLoading && campaigns.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#E7FE25] animate-pulse" />
-                <h3 className="text-sm font-bold uppercase tracking-wider text-[#999999]">
-                  Continue Where You Left Off ({filteredCampaigns.length})
-                </h3>
+              {/* Model Selector Pill */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#181818] hover:bg-[#222222] border border-[#282828] text-xs font-semibold text-[#DDD] transition-colors cursor-pointer"
+                >
+                  <span>{selectedModel}</span>
+                  <ChevronDown className="h-3 w-3 text-[#777]" />
+                </button>
+
+                {modelDropdownOpen && (
+                  <div className="absolute left-0 bottom-10 z-40 w-56 rounded-2xl bg-[#161616] border border-[#2E2E2E] p-2 space-y-1 shadow-2xl animate-in fade-in zoom-in-95">
+                    {AI_MODELS.map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedModel(m.name);
+                          setModelDropdownOpen(false);
+                        }}
+                        className="w-full flex items-center justify-between p-2 rounded-xl text-left text-xs text-white hover:bg-[#222] transition-colors cursor-pointer"
+                      >
+                        <span className="font-semibold">{m.name}</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-[#E7FE25] text-black font-bold">
+                          {m.badge}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
-              {filteredCampaigns.map((campaign) => {
-                const meta = getPipelineMeta(campaign);
-
-                return (
-                  <div
-                    key={campaign.id}
-                    className="p-5 sm:p-6 rounded-2xl bg-[#0E0E0E] hover:bg-[#121212] border border-[#1E1E1E] hover:border-[#2E2E2E] transition-all duration-200 shadow-md space-y-4 group"
-                  >
-                    {/* Top Row: Title, Product, Meta, Quick Actions */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2.5">
-                          <h4 className="text-lg font-bold text-white group-hover:text-[#E7FE25] transition-colors">
-                            {campaign.name}
-                          </h4>
-                          {campaign.product_name && (
-                            <span className="px-2 py-0.5 rounded-md bg-[#181818] border border-[#262626] text-[11px] text-[#AAA] font-medium">
-                              {campaign.product_name}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3 text-xs text-[#777]">
-                          <span className="flex items-center gap-1">
-                            <Film className="h-3 w-3" />
-                            {campaign.target_platforms || '16:9 Commercial'}
-                          </span>
-                          <span>•</span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {campaign.created_at ? new Date(campaign.created_at).toLocaleDateString() : 'Active'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Right Stage Badge & Delete */}
-                      <div className="flex items-center gap-2 self-start sm:self-center">
-                        <Badge variant={meta.badgeVariant} size="sm" className="font-semibold">
-                          {meta.stageLabel}
-                        </Badge>
-                        <button
-                          type="button"
-                          onClick={() => setCampaignToDelete(campaign)}
-                          className="p-2 rounded-lg text-[#666] hover:text-[#FA5252] hover:bg-[#1A1A1A] transition-colors cursor-pointer"
-                          title="Delete Campaign"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Middle Row: Visual 9-Stage Progress Bar */}
-                    <div className="space-y-1.5 pt-1">
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className="text-[#888] font-medium">Creative Pipeline Progress:</span>
-                        <span className="text-[#E7FE25] font-bold">{meta.stageNumber} / 9 Stages</span>
-                      </div>
-                      <div className="h-2 w-full bg-[#181818] rounded-full overflow-hidden flex gap-0.5 p-0.5">
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((stageNum) => {
-                          const isDone = stageNum <= meta.stageNumber;
-                          return (
-                            <div
-                              key={stageNum}
-                              className={`h-full flex-1 rounded-full transition-all duration-300 ${
-                                isDone ? 'bg-[#E7FE25]' : 'bg-[#222222]'
-                              }`}
-                            />
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Bottom Action Row: Next Action Banner */}
-                    <div className="pt-2 border-t border-[#181818] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                      <div className="flex items-center gap-2 text-xs text-[#999]">
-                        <Sparkles className="h-3.5 w-3.5 text-[#E7FE25]" />
-                        <span>Recommended next milestone:</span>
-                      </div>
-
-                      <div className="flex items-center gap-2.5">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/campaigns/${campaign.id}/overview`)}
-                          className="text-xs text-[#888] hover:text-white"
-                        >
-                          Studio Overview
-                        </Button>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => navigate(meta.nextActionRoute)}
-                          rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
-                          className="font-bold text-xs shadow-md"
-                        >
-                          {meta.nextActionLabel}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            {/* Circular Green Submit Arrow Button */}
+            <button
+              type="button"
+              onClick={handleLaunchPrompt}
+              className="h-9 w-9 rounded-full bg-[#E7FE25] hover:bg-[#D5EC1E] text-black flex items-center justify-center font-extrabold transition-all hover:scale-105 active:scale-95 shadow-md cursor-pointer"
+              title="Launch Campaign"
+            >
+              <ArrowUp className="h-5 w-5 stroke-[2.5]" />
+            </button>
           </div>
-        )}
+
+          {/* Omnibar Sub-Links (Skills, Connectors, MCP) */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 text-xs text-[#888]">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setPromptInput('High-converting e-commerce commercial script with sensory 3-second hook')}
+                className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
+              >
+                <Zap className="h-3.5 w-3.5 text-[#E7FE25]" />
+                <span>Skills</span>
+              </button>
+
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#181818] border border-[#242424] text-[11px] text-[#AAA]">
+                <span>TikTok</span>
+                <span>•</span>
+                <span>YouTube</span>
+                <span className="text-[#666]">Connectors</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => alert('Opening MCP & Workflow Automations Studio...')}
+              className="flex items-center gap-1 text-[#AAA] hover:text-white transition-colors cursor-pointer"
+            >
+              <Wand2 className="h-3.5 w-3.5 text-[#E7FE25]" />
+              <span>Try MCP</span>
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* 3. SUB-HEADLINE & CATEGORY FILTER TABS (from Screenshot 1) */}
+      <div className="text-center space-y-4">
+        <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#777] max-w-xl mx-auto">
+          BUILD, GENERATE, AND MARKET ANYTHING WITH SKILLS, CONNECTORS, AND AUTOMATION
+        </h2>
+
+        {/* Category Filter Pills */}
+        <div className="flex items-center justify-center flex-wrap gap-2">
+          {['All', 'Marketing', 'Explainer videos', 'Apps', 'Games'].map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                selectedCategory === cat
+                  ? 'bg-white text-black shadow-md'
+                  : 'bg-[#141414] border border-[#242424] text-[#888] hover:text-white hover:border-[#383838]'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 4. DYNAMIC PRESET GALLERY SHOWCASE (from Screenshot 1) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {filteredPresets.map((preset) => (
+          <div
+            key={preset.id}
+            onClick={() => {
+              setPromptInput(preset.prompt);
+              window.scrollTo({ top: 100, behavior: 'smooth' });
+            }}
+            className={`rounded-3xl bg-gradient-to-b ${preset.bgColor} border border-[#222222] hover:border-[#E7FE25]/50 transition-all duration-300 p-5 space-y-4 cursor-pointer group shadow-xl flex flex-col justify-between`}
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span
+                  className="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full text-black font-mono tracking-wider shadow-sm"
+                  style={{ backgroundColor: preset.accentColor }}
+                >
+                  {preset.tag}
+                </span>
+                <span className="text-[10px] font-mono text-[#AAA] bg-black/40 px-2 py-0.5 rounded-md backdrop-blur-md">
+                  {preset.model}
+                </span>
+              </div>
+
+              <div className="h-32 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-center relative overflow-hidden group-hover:scale-[1.02] transition-transform">
+                <Film className="h-8 w-8 text-white/30 group-hover:text-[#E7FE25] transition-colors" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-3">
+                  <span className="text-xs font-bold text-white group-hover:text-[#E7FE25] transition-colors">
+                    {preset.title}
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-xs text-[#AAA] line-clamp-2 leading-relaxed">
+                "{preset.prompt}"
+              </p>
+            </div>
+
+            <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs font-semibold text-white/80 group-hover:text-[#E7FE25]">
+              <span>Use This Preset</span>
+              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 5. "FROM CONCEPT TO FINAL CUT IN SECONDS" 3-STEP STUDIO (from Screenshots 2, 3, 5) */}
+      <div className="p-8 rounded-3xl bg-[#0E0E0E] border border-[#1E1E1E] space-y-8 shadow-2xl">
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#162B21] border border-emerald-500/30 text-[#E7FE25] text-xs font-bold uppercase tracking-wider">
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>Autonomous Production Pipeline</span>
+          </div>
+          <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            FROM CONCEPT TO FINAL CUT IN SECONDS
+          </h3>
+          <p className="text-xs text-[#888] max-w-lg mx-auto">
+            250+ presets for camera control, framing, and high-quality VFX — or use the general preset for custom control.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {/* Step 1 */}
+          <div className="p-6 rounded-2xl bg-[#141414] border border-[#222222] space-y-4 text-center">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#777]">Step 1</span>
+            <div className="h-28 rounded-xl bg-[#0A0A0A] border border-[#2A2A2A] flex flex-col items-center justify-center p-3 space-y-2">
+              <Upload className="h-6 w-6 text-[#E7FE25]" />
+              <span className="text-xs font-bold text-white">INPUT ANYTHING</span>
+            </div>
+            <p className="text-xs text-[#888] leading-relaxed">
+              Upload reference images (up to 7), a video clip, or simply start with a text idea.
+            </p>
+          </div>
+
+          {/* Step 2 */}
+          <div className="p-6 rounded-2xl bg-[#141414] border border-[#222222] space-y-4 text-center">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#777]">Step 2</span>
+            <div className="h-28 rounded-xl bg-[#0A0A0A] border border-[#2A2A2A] p-3 text-left overflow-hidden">
+              <p className="text-[11px] text-[#DDD] italic leading-snug">
+                "A woman kneeling in darkness, illuminated by warm radiant beam..."
+              </p>
+            </div>
+            <p className="text-xs font-bold text-white">WRITE THE PROMPT</p>
+            <p className="text-xs text-[#888] leading-relaxed">
+              Use natural language to direct the scene and describe desired commercial scenario.
+            </p>
+          </div>
+
+          {/* Step 3 */}
+          <div className="p-6 rounded-2xl bg-[#141414] border border-[#222222] space-y-4 text-center">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#777]">Step 3</span>
+            <div className="h-28 rounded-xl bg-[#0A0A0A] border border-[#2A2A2A] flex flex-col items-center justify-center relative overflow-hidden">
+              <Film className="h-8 w-8 text-[#E7FE25] mb-1" />
+              <div className="flex items-center gap-2 text-white text-xs">
+                <Download className="h-3.5 w-3.5" />
+                <RotateCcw className="h-3.5 w-3.5" />
+                <Bookmark className="h-3.5 w-3.5" />
+              </div>
+            </div>
+            <p className="text-xs font-bold text-white">GENERATE WITH AI</p>
+            <p className="text-xs text-[#888] leading-relaxed">
+              Receive broadcast-quality video in seconds. Iterate and edit seamlessly to perfect your cut.
+            </p>
+          </div>
+        </div>
+
+        <div className="text-center pt-2">
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={() => navigate('/campaigns/new')}
+            rightIcon={<ArrowRight className="h-4 w-4" />}
+            className="font-extrabold text-sm px-10 shadow-2xl"
+          >
+            Launch Creative Studio
+          </Button>
+        </div>
+      </div>
+
+      {/* 6. ACTIVE PRODUCTION CAMPAIGNS (CONTINUATION HUB) */}
+      {!isLoading && campaigns.length > 0 && (
+        <div className="space-y-4 pt-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-[#E7FE25] animate-pulse" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[#999999]">
+                Active Campaigns ({campaigns.length})
+              </h3>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {campaigns.map((camp) => (
+              <div
+                key={camp.id}
+                onClick={() => navigate(`/campaigns/${camp.id}/overview`)}
+                className="p-5 rounded-2xl bg-[#0E0E0E] hover:bg-[#141414] border border-[#1E1E1E] hover:border-[#2E2E2E] transition-all cursor-pointer space-y-3 group shadow-md"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <h4 className="text-base font-bold text-white group-hover:text-[#E7FE25] transition-colors">
+                      {camp.name}
+                    </h4>
+                    <span className="text-xs text-[#777]">
+                      {camp.product_name || 'Commercial Video'} • {camp.target_platforms || '16:9'}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCampaignToDelete(camp);
+                    }}
+                    className="p-1.5 text-[#666] hover:text-red-400 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="pt-2 border-t border-[#181818] flex items-center justify-between text-xs">
+                  <span className="text-[#888] font-medium">Status: {camp.status}</span>
+                  <span className="text-[#E7FE25] font-bold flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                    Open Studio <ArrowRight className="h-3.5 w-3.5" />
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 7. MEDIA PICKER MODAL DRAWER (from Screenshot 4) */}
+      {mediaModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="max-w-2xl w-full rounded-3xl bg-[#121212] border border-[#282828] p-6 space-y-5 shadow-2xl animate-in fade-in zoom-in-95">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-[#202020] pb-3">
+              <div className="flex items-center gap-2 overflow-x-auto">
+                {(['Uploads', 'Elements', 'Image Generations', 'Video Generations', 'Audio'] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setMediaTab(tab)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                      mediaTab === tab
+                        ? 'bg-white text-black shadow-sm'
+                        : 'text-[#888] hover:text-white'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setMediaModalOpen(false)}
+                className="p-1 text-[#777] hover:text-white rounded-lg cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="space-y-4">
+              <div className="p-8 rounded-2xl border-2 border-dashed border-[#2A2A2A] bg-[#0E0E0E] text-center space-y-3">
+                <Upload className="h-8 w-8 text-[#E7FE25] mx-auto" />
+                <div>
+                  <p className="text-xs font-bold text-white">Drop images, video clips, or audio files here</p>
+                  <p className="text-[10px] text-[#666] mt-0.5">Supports PNG, JPG, MP4, MOV, MP3 (Max 50MB)</p>
+                </div>
+                <label className="inline-block px-4 py-2 rounded-xl bg-[#1C1C1C] hover:bg-[#262626] text-xs font-bold text-white border border-[#333] cursor-pointer transition-colors">
+                  Upload file
+                  <input type="file" className="hidden" />
+                </label>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#202020]">
+              <Button variant="ghost" size="sm" onClick={() => setMediaModalOpen(false)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Modal */}
       {campaignToDelete && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
           <div className="p-6 rounded-2xl bg-[#121212] border border-[#282828] max-w-md w-full space-y-4 shadow-2xl">
             <h4 className="text-lg font-bold text-white">Delete Campaign</h4>
-            <p className="text-xs text-[#888] leading-relaxed">
-              Are you sure you want to permanently delete <strong className="text-white">{campaignToDelete.name}</strong>? All generated storyboards, scenes, and media will be removed.
+            <p className="text-xs text-[#888]">
+              Are you sure you want to delete <strong className="text-white">{campaignToDelete.name}</strong>?
             </p>
             <div className="flex items-center justify-end gap-2.5 pt-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setCampaignToDelete(null)}
-                disabled={isDeleting}
-              >
+              <Button variant="ghost" size="sm" onClick={() => setCampaignToDelete(null)}>
                 Cancel
               </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleDelete}
-                isLoading={isDeleting}
-              >
-                Delete Campaign
+              <Button variant="destructive" size="sm" onClick={handleDelete} isLoading={isDeleting}>
+                Delete
               </Button>
             </div>
           </div>
