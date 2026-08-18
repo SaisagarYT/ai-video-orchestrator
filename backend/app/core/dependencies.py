@@ -15,23 +15,23 @@ auth_service = AuthService()
 
 def get_raw_session_token(request: Request) -> str | None:
     """
-    Extract session token from HttpOnly cookie first,
-    or from Authorization Bearer header as secondary.
+    Extract session token from Authorization Bearer header if explicitly provided,
+    or from the primary HttpOnly session cookie.
     """
-    # 1. Check primary session cookie
+    # 1. Check Authorization Bearer header (for explicit tokens or API clients)
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        return auth_header[7:].strip()
+
+    # 2. Check primary session cookie
     token = request.cookies.get(settings.SESSION_COOKIE_NAME)
     if token:
         return token
 
-    # 2. Check __Host- prefixed cookie if configured
+    # 3. Check __Host- prefixed cookie if configured
     token = request.cookies.get(f"__Host-{settings.SESSION_COOKIE_NAME}")
     if token:
         return token
-
-    # 3. Check Authorization Bearer header (for automated testing / API clients)
-    auth_header = request.headers.get("Authorization")
-    if auth_header and auth_header.startswith("Bearer "):
-        return auth_header[7:].strip()
 
     return None
 
