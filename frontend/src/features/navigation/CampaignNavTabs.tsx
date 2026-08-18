@@ -1,40 +1,47 @@
 import type { ReactNode } from 'react';
 import {
-  LayoutDashboard,
   FileText,
+  Compass,
   Lightbulb,
   Layers,
   Clapperboard,
-  FolderOpen,
-  CheckCircle2,
+  ShieldCheck,
+  Sliders,
+  Cpu,
   Film,
+  LayoutDashboard,
 } from 'lucide-react';
 
 export type CampaignSection =
   | 'overview'
   | 'brief'
+  | 'strategy'
   | 'concepts'
   | 'storyboard'
   | 'scenes'
-  | 'assets'
-  | 'quality'
-  | 'final';
+  | 'evaluation'
+  | 'timeline'
+  | 'render'
+  | 'review';
 
 export interface CampaignNavTabItem {
   id: CampaignSection;
+  stageNumber?: number;
   label: string;
   icon: ReactNode;
 }
 
 export const CAMPAIGN_NAV_ITEMS: CampaignNavTabItem[] = [
-  { id: 'overview', label: 'Overview', icon: <LayoutDashboard className="h-4 w-4" /> },
-  { id: 'brief', label: 'Brief', icon: <FileText className="h-4 w-4" /> },
-  { id: 'concepts', label: 'Concepts', icon: <Lightbulb className="h-4 w-4" /> },
-  { id: 'storyboard', label: 'Storyboard', icon: <Layers className="h-4 w-4" /> },
-  { id: 'scenes', label: 'Scenes', icon: <Clapperboard className="h-4 w-4" /> },
-  { id: 'assets', label: 'Assets', icon: <FolderOpen className="h-4 w-4" /> },
-  { id: 'quality', label: 'Quality', icon: <CheckCircle2 className="h-4 w-4" /> },
-  { id: 'final', label: 'Final', icon: <Film className="h-4 w-4" /> },
+  { id: 'overview', label: 'Studio Overview', icon: <LayoutDashboard className="h-3.5 w-3.5" /> },
+  { id: 'brief', stageNumber: 1, label: '1. Brief', icon: <FileText className="h-3.5 w-3.5" /> },
+  { id: 'strategy', stageNumber: 2, label: '2. Strategy', icon: <Compass className="h-3.5 w-3.5" /> },
+  { id: 'concepts', stageNumber: 3, label: '3. Concepts', icon: <Lightbulb className="h-3.5 w-3.5" /> },
+  { id: 'storyboard', stageNumber: 4, label: '4. Storyboard', icon: <Layers className="h-3.5 w-3.5" /> },
+  { id: 'scenes', stageNumber: 5, label: '5. Scenes', icon: <Clapperboard className="h-3.5 w-3.5" /> },
+  { id: 'evaluation', stageNumber: 6, label: '6. Consistency', icon: <ShieldCheck className="h-3.5 w-3.5" /> },
+  { id: 'timeline', stageNumber: 7, label: '7. Timeline', icon: <Sliders className="h-3.5 w-3.5" /> },
+  { id: 'render', stageNumber: 8, label: '8. Render', icon: <Cpu className="h-3.5 w-3.5" /> },
+  { id: 'review', stageNumber: 9, label: '9. Review', icon: <Film className="h-3.5 w-3.5" /> },
 ];
 
 export interface CampaignNavTabsProps {
@@ -50,10 +57,10 @@ export function CampaignNavTabs({
 }: CampaignNavTabsProps) {
   return (
     <nav
-      aria-label="Campaign Sections"
-      className={`border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] px-4 sm:px-6 overflow-x-auto no-scrollbar ${className}`}
+      aria-label="Campaign Pipeline Stages"
+      className={`border-b border-[#1E1E1E] bg-[#0A0A0A] px-3 sm:px-6 overflow-x-auto no-scrollbar select-none ${className}`}
     >
-      <div className="flex items-center space-x-1 min-w-max">
+      <div className="flex items-center space-x-1 min-w-max py-1">
         {CAMPAIGN_NAV_ITEMS.map((item) => {
           const isActive = activeSection === item.id;
 
@@ -62,13 +69,13 @@ export function CampaignNavTabs({
               key={item.id}
               type="button"
               onClick={() => onSelectSection(item.id)}
-              className={`flex items-center gap-2 py-3 px-3 border-b-2 text-xs font-medium transition-all duration-150 cursor-pointer select-none ${
+              className={`flex items-center gap-1.5 py-2 px-3 rounded-lg text-xs transition-all duration-150 cursor-pointer font-medium ${
                 isActive
-                  ? 'border-[var(--brand-lime)] text-[var(--text-primary)] font-semibold'
-                  : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-default)]'
+                  ? 'bg-[#181818] text-white border border-[#2E2E2E] shadow-sm font-semibold'
+                  : 'text-[#888888] hover:text-white hover:bg-[#141414] border border-transparent'
               }`}
             >
-              <span className={isActive ? 'text-[var(--brand-lime)]' : 'text-[var(--text-muted)]'}>
+              <span className={isActive ? 'text-[#E7FE25]' : 'text-[#666666]'}>
                 {item.icon}
               </span>
               <span>{item.label}</span>
