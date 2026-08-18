@@ -86,3 +86,40 @@ export function NotFoundState({
     </div>
   );
 }
+
+export function AuthRequiredState({
+  title = 'Authentication Required',
+  description = 'Please sign in or create a free account to manage your campaigns, access creative studios, and generate AI videos.',
+  onLogin,
+}: {
+  title?: string;
+  description?: string;
+  onLogin?: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center text-center p-10 sm:p-14 rounded-[var(--radius-xl)] border border-[var(--color-primary-subtle)]/30 bg-[var(--bg-surface)] max-w-xl mx-auto shadow-2xl">
+      <div className="h-16 w-16 rounded-[var(--radius-xl)] bg-[var(--color-primary-subtle)]/20 border border-[var(--color-primary)]/30 flex items-center justify-center text-[var(--color-primary)] mb-5 shadow-inner">
+        <AlertCircle className="h-8 w-8 text-cyan-400" />
+      </div>
+
+      <h3 className="text-xl font-bold text-[var(--text-primary)] tracking-tight font-app">
+        {title}
+      </h3>
+      <p className="text-sm text-[var(--text-muted)] max-w-md mt-2 leading-relaxed font-app">
+        {description}
+      </p>
+
+      <div className="flex items-center gap-3 mt-8">
+        <Button
+          variant="primary"
+          size="md"
+          className="px-6 shadow-lg shadow-cyan-500/20"
+          onClick={onLogin || (() => (window.location.href = '/login'))}
+        >
+          Sign In / Create Account
+        </Button>
+      </div>
+    </div>
+  );
+}
+

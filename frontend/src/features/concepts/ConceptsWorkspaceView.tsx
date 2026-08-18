@@ -5,18 +5,16 @@ import { CampaignHeader } from '../../components/layout/workspace/CampaignHeader
 import { CampaignNavTabs } from '../navigation/CampaignNavTabs';
 import { WorkspaceContainer } from '../../components/layout/workspace/WorkspaceContainer';
 import { WorkspaceLoadingSkeleton } from '../../components/ui/LoadingState';
-import { ErrorState } from '../../components/ui/ErrorState';
-import { Button, Badge, Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
+import { Button, Badge } from '../../components/ui';
 import {
   Sparkles,
   Lightbulb,
   CheckCircle2,
   ArrowRight,
-  RefreshCw,
   MessageSquare,
   Target,
-  Layers,
 } from 'lucide-react';
+
 
 interface CreativeConcept {
   id: string;

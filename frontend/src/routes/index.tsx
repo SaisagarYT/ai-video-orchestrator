@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { AppShell } from '../components/layout/app-shell/AppShell';
 import { AuthPage } from '../components/auth/AuthPage';
 import { CampaignControlCenterView } from '../features/campaigns/views/CampaignControlCenterView';
@@ -12,6 +13,25 @@ import {
   SettingsPlaceholderView,
 } from '../features/campaigns/ShellPlaceholderView';
 import { NotFoundState } from '../components/ui/ErrorState';
+import { WorkspaceLoadingSkeleton } from '../components/ui/LoadingState';
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-[var(--bg-app)]">
+        <WorkspaceLoadingSkeleton />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+}
 
 export function AppRoutes() {
   const navigate = useNavigate();
@@ -25,8 +45,14 @@ export function AppRoutes() {
       {/* Root redirects to /campaigns */}
       <Route path="/" element={<Navigate to="/campaigns" replace />} />
 
-      {/* Primary Application Shell Layout Route */}
-      <Route element={<AppShell />}>
+      {/* Primary Application Shell Layout Route - Protected */}
+      <Route
+        element={
+          <ProtectedRoute>
+            <AppShell />
+          </ProtectedRoute>
+        }
+      >
         {/* Global Dashboard / Campaigns List */}
         <Route path="/dashboard" element={<Navigate to="/campaigns" replace />} />
         <Route path="/campaigns" element={<CampaignsListView />} />
@@ -75,3 +101,4 @@ export function AppRoutes() {
     </Routes>
   );
 }
+

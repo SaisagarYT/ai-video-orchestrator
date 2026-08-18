@@ -5,19 +5,16 @@ import { CampaignHeader } from '../../components/layout/workspace/CampaignHeader
 import { CampaignNavTabs } from '../navigation/CampaignNavTabs';
 import { WorkspaceContainer } from '../../components/layout/workspace/WorkspaceContainer';
 import { WorkspaceLoadingSkeleton } from '../../components/ui/LoadingState';
-import { Button, Badge, Card, CardHeader, CardTitle, CardContent } from '../../components/ui';
+import { Button, Badge, Card, CardContent } from '../../components/ui';
 import {
   Wand2,
   Clapperboard,
-  Sparkles,
   ArrowRight,
-  CheckCircle2,
   Play,
-  Clock,
   RefreshCw,
   Image,
-  Video,
 } from 'lucide-react';
+
 
 interface AssetData {
   id: string;
