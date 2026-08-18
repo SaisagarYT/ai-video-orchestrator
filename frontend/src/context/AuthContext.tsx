@@ -6,6 +6,9 @@ export interface User {
   email: string;
   full_name: string;
   role: string;
+  is_active?: boolean;
+  email_verified_at?: string | null;
+  created_at?: string;
 }
 
 interface AuthContextType {
@@ -15,35 +18,28 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (fullName: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem('kanggird_auth_token');
-  });
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Validate session on mount
+  // Validate server-managed session on initial application mount
   useEffect(() => {
     async function checkAuth() {
-      const storedToken = localStorage.getItem('kanggird_auth_token');
-      if (!storedToken) {
-        setIsLoading(false);
-        return;
-      }
-
       try {
         const res = await api.get('/auth/me');
-        setUser(res.data);
-        setToken(storedToken);
+        if (res.data && res.data.id) {
+          setUser(res.data);
+        } else {
+          setUser(null);
+        }
       } catch {
-        localStorage.removeItem('kanggird_auth_token');
         setUser(null);
-        setToken(null);
       } finally {
         setIsLoading(false);
       }
@@ -53,42 +49,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const res = await api.post('/auth/login', { email, password });
-    const accessToken = res.data.access_token;
-    localStorage.setItem('kanggird_auth_token', accessToken);
-    setToken(accessToken);
-
-    // Fetch user profile
-    const userRes = await api.get('/auth/me');
-    setUser(userRes.data);
+    const res = await api.post('/auth/login', {
+      email: email.trim().toLowerCase(),
+      password,
+    });
+    if (res.data && res.data.id) {
+      setUser(res.data);
+    } else {
+      const meRes = await api.get('/auth/me');
+      setUser(meRes.data);
+    }
   };
 
   const register = async (fullName: string, email: string, password: string) => {
-    await api.post('/auth/register', {
-      full_name: fullName,
-      email,
+    const res = await api.post('/auth/register', {
+      full_name: fullName.trim(),
+      email: email.trim().toLowerCase(),
       password,
     });
-    // Auto-login after registration
-    await login(email, password);
+    if (res.data && res.data.id) {
+      setUser(res.data);
+    } else {
+      const meRes = await api.get('/auth/me');
+      setUser(meRes.data);
+    }
   };
 
-  const logout = () => {
-    localStorage.removeItem('kanggird_auth_token');
-    setUser(null);
-    setToken(null);
+  const logout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch {
+      // Ignore network errors on logout
+    } finally {
+      setUser(null);
+    }
+  };
+
+  const refreshUser = async () => {
+    try {
+      const res = await api.get('/auth/me');
+      setUser(res.data);
+    } catch {
+      setUser(null);
+    }
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        token,
+        token: null, // Tokens are HttpOnly cookies, not exposed to JS
         isAuthenticated: !!user,
         isLoading,
         login,
         register,
         logout,
+        refreshUser,
       }}
     >
       {children}
