@@ -1,4 +1,8 @@
 from app.models.user import User
+from app.models.session import Session
+from app.models.email_verification import EmailVerificationToken
+from app.models.password_reset import PasswordResetToken
+from app.models.security_event import SecurityEvent
 from app.models.project import Project
 from app.models.business import Business
 from app.models.campaign import Campaign
@@ -18,6 +22,10 @@ from app.models.render_job import RenderJob
 
 __all__ = [
     "User",
+    "Session",
+    "EmailVerificationToken",
+    "PasswordResetToken",
+    "SecurityEvent",
     "Project",
     "Business",
     "Campaign",
