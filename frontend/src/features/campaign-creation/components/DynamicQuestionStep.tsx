@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { ContextSessionState } from '../types';
 import { Button, Badge } from '../../../components/ui';
 import {
@@ -32,7 +32,6 @@ export function DynamicQuestionStep({
   const [answerText, setAnswerText] = useState('');
   const [selectedPill, setSelectedPill] = useState<string | null>(null);
 
-  // Sync answerText if user had already answered this question previously
   useEffect(() => {
     if (currentQuestion) {
       const existing = session.user_answers[currentQuestion.field] || session.user_answers[currentQuestion.id] || '';
@@ -60,15 +59,15 @@ export function DynamicQuestionStep({
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 font-app py-2">
-      {/* Top Conversation History & Rewind Timeline */}
-      <div className="p-4 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-2.5">
-        <div className="flex items-center justify-between text-xs text-[var(--text-muted)] font-semibold uppercase tracking-wider">
+    <div className="max-w-3xl mx-auto space-y-6 py-2">
+      {/* Top Question Stepper Navigation */}
+      <div className="p-4 rounded-2xl bg-[#0E0E0E] border border-[#1C1C1C] space-y-2.5 shadow-md">
+        <div className="flex items-center justify-between text-xs text-[#888] font-semibold uppercase tracking-wider">
           <div className="flex items-center gap-1.5">
-            <MessageSquare className="h-3.5 w-3.5 text-[var(--brand-lime)]" />
-            <span>Interview Timeline</span>
+            <MessageSquare className="h-3.5 w-3.5 text-[#E7FE25]" />
+            <span>AI Director Interview</span>
           </div>
-          <span className="font-mono-code text-[11px] text-[var(--brand-lime)]">
+          <span className="font-mono text-[11px] text-[#E7FE25] font-bold">
             Question {currentQIndex + 1} of {session.clarification_questions.length}
           </span>
         </div>
@@ -83,18 +82,18 @@ export function DynamicQuestionStep({
                 key={q.id || idx}
                 type="button"
                 onClick={() => onRewind(idx)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   isCurrent
-                    ? 'bg-[var(--brand-lime)] text-[#161616] font-bold shadow-xs'
+                    ? 'bg-[#E7FE25] text-black shadow-sm font-bold'
                     : isAnswered
-                    ? 'bg-[var(--bg-surface-elevated)] border border-[#12B886]/40 text-[#12B886] hover:bg-[var(--bg-surface-active)]'
-                    : 'bg-[var(--bg-surface-sunken)] border border-[var(--border-subtle)] text-[var(--text-muted)]'
+                    ? 'bg-[#141414] border border-[#10B981]/50 text-[#10B981]'
+                    : 'bg-[#121212] border border-[#202020] text-[#666]'
                 }`}
               >
                 {isAnswered && !isCurrent ? (
                   <CheckCircle2 className="h-3.5 w-3.5" />
                 ) : (
-                  <span className="font-mono-code text-[10px]">0{idx + 1}</span>
+                  <span className="font-mono text-[10px]">0{idx + 1}</span>
                 )}
                 <span className="capitalize">{q.field?.replace(/_/g, ' ') || `Step ${idx + 1}`}</span>
               </button>
@@ -103,35 +102,35 @@ export function DynamicQuestionStep({
         </div>
       </div>
 
-      {/* Main Dynamic Question Box */}
-      <div className="p-6 sm:p-8 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-default)] space-y-6 shadow-xl">
+      {/* Main Dynamic Question Studio Box */}
+      <div className="p-6 sm:p-8 rounded-3xl bg-[#0E0E0E] border border-[#1E1E1E] space-y-6 shadow-2xl">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Badge variant="lime" size="sm">
               <Sparkles className="h-3 w-3 mr-1" />
-              Dynamic Question
+              Dynamic Interview
             </Badge>
             {currentQuestion.required && (
-              <span className="text-[10px] text-[var(--text-muted)] font-semibold uppercase">
-                Required for Brief
+              <span className="text-[10px] text-[#777] font-semibold uppercase tracking-wider">
+                Required for Creative Bible
               </span>
             )}
           </div>
 
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--text-primary)]">
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
             {currentQuestion.question}
           </h2>
-          <p className="text-xs text-[var(--text-muted)]">
-            KANGGIRD is refining the camera style, narrative pacing, and audience targeting.
+          <p className="text-xs text-[#888]">
+            KANGGIRD is refining camera trajectory, audience psychology, and storyboard duration.
           </p>
         </div>
 
-        {/* Quick Suggestion Pills */}
+        {/* Suggestion Pills */}
         {currentQuestion.suggested_options && currentQuestion.suggested_options.length > 0 && (
           <div className="space-y-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#888] flex items-center gap-1">
               <HelpCircle className="h-3 w-3" />
-              <span>Suggested Options (Click to select)</span>
+              <span>Recommended Directives (Click to apply)</span>
             </span>
             <div className="flex flex-wrap gap-2">
               {currentQuestion.suggested_options.map((opt, i) => (
@@ -141,8 +140,8 @@ export function DynamicQuestionStep({
                   onClick={() => handleSelectPill(opt)}
                   className={`px-3.5 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer text-left ${
                     selectedPill === opt
-                      ? 'bg-[var(--brand-lime-muted)] border-[var(--brand-lime)] text-[var(--text-primary)] font-bold shadow-xs'
-                      : 'bg-[var(--bg-surface-elevated)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-default)]'
+                      ? 'bg-[#E7FE25] text-black border-[#E7FE25] font-bold shadow-sm'
+                      : 'bg-[#141414] border-[#242424] text-[#CCC] hover:text-white hover:border-[#383838]'
                   }`}
                 >
                   {opt}
@@ -152,11 +151,11 @@ export function DynamicQuestionStep({
           </div>
         )}
 
-        {/* User Answer Text Input */}
+        {/* Answer Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
-              Your Answer
+            <label className="text-xs font-bold uppercase tracking-wider text-[#888]">
+              Your Response
             </label>
             <textarea
               value={answerText}
@@ -167,29 +166,29 @@ export function DynamicQuestionStep({
               rows={3}
               required
               placeholder="Type your response or refine the selected option..."
-              className="w-full p-4 rounded-xl bg-[var(--bg-surface-sunken)] border border-[var(--border-default)] hover:border-[var(--border-strong)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-lime)] transition-colors resize-none leading-relaxed"
+              className="w-full p-4 rounded-2xl bg-[#141414] border border-[#242424] text-xs text-white placeholder:text-[#555] focus:outline-none focus:border-[#E7FE25] transition-colors resize-none leading-relaxed"
             />
           </div>
 
-          {/* Optional Asset Upload Mock/Dropzone */}
-          <div className="p-3.5 rounded-xl border border-dashed border-[var(--border-subtle)] bg-[var(--bg-surface-sunken)]/50 flex items-center justify-between text-xs text-[var(--text-muted)]">
+          {/* Optional File Attachment Cue */}
+          <div className="p-3.5 rounded-2xl border border-dashed border-[#242424] bg-[#121212] flex items-center justify-between text-xs text-[#777]">
             <div className="flex items-center gap-2">
-              <Upload className="h-4 w-4 text-[var(--brand-lime)]" />
-              <span>Attach reference image / brand logo (Optional)</span>
+              <Upload className="h-4 w-4 text-[#E7FE25]" />
+              <span>Attach reference image or logo asset (Optional)</span>
             </div>
-            <label className="px-3 py-1 rounded-lg bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] text-[11px] font-semibold text-[var(--text-primary)] hover:bg-[var(--bg-surface-active)] cursor-pointer">
-              Choose File
+            <label className="px-3 py-1 rounded-lg bg-[#181818] border border-[#2A2A2A] text-[11px] font-semibold text-white hover:bg-[#222] cursor-pointer">
+              Browse File
               <input type="file" className="hidden" />
             </label>
           </div>
 
           {error && (
-            <div className="p-3 rounded-lg bg-[var(--color-destructive-bg)] border border-[var(--color-destructive)]/30 text-xs text-[var(--color-destructive)]">
+            <div className="p-3 rounded-xl bg-red-950/40 border border-red-500/30 text-xs text-red-400">
               {error}
             </div>
           )}
 
-          <div className="flex items-center justify-between pt-2">
+          <div className="flex items-center justify-between pt-2 border-t border-[#1C1C1C]">
             {currentQIndex > 0 ? (
               <Button
                 type="button"
@@ -198,7 +197,7 @@ export function DynamicQuestionStep({
                 onClick={() => onRewind(currentQIndex - 1)}
                 leftIcon={<RotateCcw className="h-3.5 w-3.5" />}
               >
-                Previous Question
+                Previous Step
               </Button>
             ) : (
               <div />
@@ -211,10 +210,10 @@ export function DynamicQuestionStep({
               disabled={!answerText.trim() || isLoading}
               isLoading={isLoading}
               rightIcon={<ArrowRight className="h-4 w-4" />}
-              className="font-bold shadow-[0_0_15px_rgba(231,254,37,0.3)]"
+              className="font-bold px-6 shadow-lg"
             >
               {currentQIndex === session.clarification_questions.length - 1
-                ? 'Synthesize Campaign Brief'
+                ? 'Synthesize Creative Brief'
                 : 'Next Question'}
             </Button>
           </div>

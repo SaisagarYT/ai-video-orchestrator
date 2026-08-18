@@ -4,7 +4,7 @@ import { InitialPromptStep } from '../components/InitialPromptStep';
 import { DynamicQuestionStep } from '../components/DynamicQuestionStep';
 import { BriefReviewStep } from '../components/BriefReviewStep';
 import { AdvancedModeForm } from '../components/AdvancedModeForm';
-import { ArrowLeft, Sparkles, Sliders } from 'lucide-react';
+import { ArrowLeft, Sparkles, Sliders, Layers } from 'lucide-react';
 
 export function CampaignCreationPage() {
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ export function CampaignCreationPage() {
   const handleApproveBrief = async () => {
     try {
       const campaignId = await finalizeCampaign();
-      navigate(`/campaigns/${campaignId}/overview`);
+      navigate(`/campaigns/${campaignId}/strategy`);
     } catch {
       // error handled in hook
     }
@@ -35,7 +35,7 @@ export function CampaignCreationPage() {
   const handleAdvancedSubmit = async () => {
     try {
       const campaignId = await finalizeCampaign();
-      navigate(`/campaigns/${campaignId}/overview`);
+      navigate(`/campaigns/${campaignId}/strategy`);
     } catch {
       // error handled in hook
     }
@@ -49,50 +49,57 @@ export function CampaignCreationPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto bg-[var(--bg-app)] min-h-0 font-app">
-      {/* Top Header Row */}
-      <div className="bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-0 z-20 shadow-xs">
-        <button
-          type="button"
-          onClick={() => navigate('/campaigns')}
-          className="flex items-center gap-2 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Exit to Campaigns</span>
-        </button>
+    <div className="flex-1 flex flex-col overflow-y-auto bg-[#060606] min-h-0 text-white select-none">
+      {/* Studio Header Bar */}
+      <div className="bg-[#0A0A0A] border-b border-[#1C1C1C] px-4 sm:px-8 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-0 z-30 shadow-md">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/campaigns')}
+            className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#888888] hover:text-white hover:bg-[#141414] transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Workspace</span>
+          </button>
+          <span className="text-[#333]">•</span>
+          <div className="flex items-center gap-1.5 text-xs text-[#AAA]">
+            <Layers className="h-3.5 w-3.5 text-[#E7FE25]" />
+            <span className="font-semibold text-white">New Commercial Studio</span>
+          </div>
+        </div>
 
-        {/* Mode Switcher Pills */}
-        <div className="flex items-center gap-1 bg-[var(--bg-surface-elevated)] p-1 rounded-xl border border-[var(--border-subtle)] self-center sm:self-auto">
+        {/* Studio Mode Selector */}
+        <div className="flex items-center gap-1 bg-[#121212] p-1 rounded-xl border border-[#222222] self-center sm:self-auto shadow-inner">
           <button
             type="button"
             onClick={() => setMode('beginner')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               mode === 'beginner'
-                ? 'bg-[var(--brand-lime)] text-[#161616] font-bold shadow-xs'
-                : 'text-[var(--text-muted)] hover:text-white'
+                ? 'bg-[#E7FE25] text-black shadow-sm'
+                : 'text-[#777777] hover:text-white hover:bg-[#181818]'
             }`}
           >
             <Sparkles className="h-3.5 w-3.5" />
-            <span>AI Director Interview (Beginner)</span>
+            <span>AI Director Mode</span>
           </button>
 
           <button
             type="button"
             onClick={() => setMode('advanced')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               mode === 'advanced'
-                ? 'bg-[var(--brand-lime)] text-[#161616] font-bold shadow-xs'
-                : 'text-[var(--text-muted)] hover:text-white'
+                ? 'bg-[#E7FE25] text-black shadow-sm'
+                : 'text-[#777777] hover:text-white hover:bg-[#181818]'
             }`}
           >
             <Sliders className="h-3.5 w-3.5" />
-            <span>Pro Studio Mode (Advanced)</span>
+            <span>Pro Manual Mode</span>
           </button>
         </div>
       </div>
 
-      {/* Main Content Viewport */}
-      <div className="flex-1 p-4 sm:p-6 lg:p-8">
+      {/* Main Studio Viewport */}
+      <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
         {mode === 'advanced' ? (
           <AdvancedModeForm
             data={advancedData}
