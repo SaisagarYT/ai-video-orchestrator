@@ -4,20 +4,15 @@ import {
   Plus,
   ArrowUp,
   Zap,
-  Sparkles,
   ChevronDown,
   Wand2,
   Film,
-  Upload,
-  Download,
-  RotateCcw,
-  Bookmark,
   Trash2,
   ArrowRight,
-  X,
 } from 'lucide-react';
 import { api } from '../../../lib/api';
 import { WorkspaceContainer } from '../../../components/layout/workspace/WorkspaceContainer';
+import { MediaPickerModal } from '../../../components/ui/MediaPickerModal';
 import { Button } from '../../../components/ui';
 
 interface CampaignItem {
@@ -79,25 +74,20 @@ export function CampaignWorkspaceHubView() {
   const navigate = useNavigate();
 
   const [campaigns, setCampaigns] = useState<CampaignItem[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [promptInput, setPromptInput] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedModel, setSelectedModel] = useState<string>('⚡ V4 Flash Manual');
   const [modelDropdownOpen, setModelDropdownOpen] = useState<boolean>(false);
-  const [mediaModalOpen, setMediaModalOpen] = useState<boolean>(false);
-  const [mediaTab, setMediaTab] = useState<'Uploads' | 'Elements' | 'Image Generations' | 'Video Generations' | 'Audio'>('Uploads');
+  const [mediaPickerOpen, setMediaPickerOpen] = useState<boolean>(false);
   const [campaignToDelete, setCampaignToDelete] = useState<CampaignItem | null>(null);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   const fetchCampaigns = async () => {
-    setIsLoading(true);
     try {
       const res = await api.get('/campaigns/');
       setCampaigns(res.data || []);
     } catch {
       setCampaigns([]);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -129,10 +119,9 @@ export function CampaignWorkspaceHubView() {
   );
 
   return (
-    <WorkspaceContainer layoutMode="full-width" className="p-4 sm:p-6 lg:p-10 space-y-12 max-w-6xl mx-auto select-none">
-      {/* 1. HERO SECTION: "WHAT ARE WE CREATING TODAY?" */}
-      <div className="text-center space-y-7 pt-4">
-        {/* Header with Lime Icon (from Screenshot 1) */}
+    <WorkspaceContainer layoutMode="full-width" className="p-4 sm:p-6 lg:p-10 space-y-10 max-w-6xl mx-auto select-none font-app text-white">
+      {/* 1. HERO HEADER: "WHAT ARE WE CREATING TODAY?" (from Screenshot 1) */}
+      <div className="text-center space-y-6 pt-2">
         <div className="inline-flex items-center gap-3">
           <div className="h-9 w-9 rounded-xl bg-[#E7FE25] flex items-center justify-center text-black font-black text-lg shadow-lg">
             ⚡
@@ -167,7 +156,7 @@ export function CampaignWorkspaceHubView() {
               {/* Media Plus Button */}
               <button
                 type="button"
-                onClick={() => setMediaModalOpen(true)}
+                onClick={() => setMediaPickerOpen(true)}
                 className="h-8 w-8 rounded-full bg-[#1C1C1C] hover:bg-[#282828] text-white flex items-center justify-center transition-colors cursor-pointer"
                 title="Add Media / Reference"
               >
@@ -322,86 +311,13 @@ export function CampaignWorkspaceHubView() {
         ))}
       </div>
 
-      {/* 5. "FROM CONCEPT TO FINAL CUT IN SECONDS" 3-STEP STUDIO (from Screenshots 2, 3, 5) */}
-      <div className="p-8 rounded-3xl bg-[#0E0E0E] border border-[#1E1E1E] space-y-8 shadow-2xl">
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#162B21] border border-emerald-500/30 text-[#E7FE25] text-xs font-bold uppercase tracking-wider">
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>Autonomous Production Pipeline</span>
-          </div>
-          <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            FROM CONCEPT TO FINAL CUT IN SECONDS
-          </h3>
-          <p className="text-xs text-[#888] max-w-lg mx-auto">
-            250+ presets for camera control, framing, and high-quality VFX — or use the general preset for custom control.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {/* Step 1 */}
-          <div className="p-6 rounded-2xl bg-[#141414] border border-[#222222] space-y-4 text-center">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#777]">Step 1</span>
-            <div className="h-28 rounded-xl bg-[#0A0A0A] border border-[#2A2A2A] flex flex-col items-center justify-center p-3 space-y-2">
-              <Upload className="h-6 w-6 text-[#E7FE25]" />
-              <span className="text-xs font-bold text-white">INPUT ANYTHING</span>
-            </div>
-            <p className="text-xs text-[#888] leading-relaxed">
-              Upload reference images (up to 7), a video clip, or simply start with a text idea.
-            </p>
-          </div>
-
-          {/* Step 2 */}
-          <div className="p-6 rounded-2xl bg-[#141414] border border-[#222222] space-y-4 text-center">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#777]">Step 2</span>
-            <div className="h-28 rounded-xl bg-[#0A0A0A] border border-[#2A2A2A] p-3 text-left overflow-hidden">
-              <p className="text-[11px] text-[#DDD] italic leading-snug">
-                "A woman kneeling in darkness, illuminated by warm radiant beam..."
-              </p>
-            </div>
-            <p className="text-xs font-bold text-white">WRITE THE PROMPT</p>
-            <p className="text-xs text-[#888] leading-relaxed">
-              Use natural language to direct the scene and describe desired commercial scenario.
-            </p>
-          </div>
-
-          {/* Step 3 */}
-          <div className="p-6 rounded-2xl bg-[#141414] border border-[#222222] space-y-4 text-center">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#777]">Step 3</span>
-            <div className="h-28 rounded-xl bg-[#0A0A0A] border border-[#2A2A2A] flex flex-col items-center justify-center relative overflow-hidden">
-              <Film className="h-8 w-8 text-[#E7FE25] mb-1" />
-              <div className="flex items-center gap-2 text-white text-xs">
-                <Download className="h-3.5 w-3.5" />
-                <RotateCcw className="h-3.5 w-3.5" />
-                <Bookmark className="h-3.5 w-3.5" />
-              </div>
-            </div>
-            <p className="text-xs font-bold text-white">GENERATE WITH AI</p>
-            <p className="text-xs text-[#888] leading-relaxed">
-              Receive broadcast-quality video in seconds. Iterate and edit seamlessly to perfect your cut.
-            </p>
-          </div>
-        </div>
-
-        <div className="text-center pt-2">
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={() => navigate('/campaigns/new')}
-            rightIcon={<ArrowRight className="h-4 w-4" />}
-            className="font-extrabold text-sm px-10 shadow-2xl"
-          >
-            Launch Creative Studio
-          </Button>
-        </div>
-      </div>
-
-      {/* 6. ACTIVE PRODUCTION CAMPAIGNS (CONTINUATION HUB) */}
-      {!isLoading && campaigns.length > 0 && (
-        <div className="space-y-4 pt-4">
+      {/* 5. ACTIVE PRODUCTION CAMPAIGNS */}
+      {campaigns.length > 0 && (
+        <div className="space-y-4 pt-4 border-t border-[#1C1C1C]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-[#E7FE25] animate-pulse" />
-              <h3 className="text-sm font-bold uppercase tracking-wider text-[#999999]">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#888]">
                 Active Campaigns ({campaigns.length})
               </h3>
             </div>
@@ -448,64 +364,18 @@ export function CampaignWorkspaceHubView() {
         </div>
       )}
 
-      {/* 7. MEDIA PICKER MODAL DRAWER (from Screenshot 4) */}
-      {mediaModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="max-w-2xl w-full rounded-3xl bg-[#121212] border border-[#282828] p-6 space-y-5 shadow-2xl animate-in fade-in zoom-in-95">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-[#202020] pb-3">
-              <div className="flex items-center gap-2 overflow-x-auto">
-                {(['Uploads', 'Elements', 'Image Generations', 'Video Generations', 'Audio'] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    type="button"
-                    onClick={() => setMediaTab(tab)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
-                      mediaTab === tab
-                        ? 'bg-white text-black shadow-sm'
-                        : 'text-[#888] hover:text-white'
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={() => setMediaModalOpen(false)}
-                className="p-1 text-[#777] hover:text-white rounded-lg cursor-pointer"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="space-y-4">
-              <div className="p-8 rounded-2xl border-2 border-dashed border-[#2A2A2A] bg-[#0E0E0E] text-center space-y-3">
-                <Upload className="h-8 w-8 text-[#E7FE25] mx-auto" />
-                <div>
-                  <p className="text-xs font-bold text-white">Drop images, video clips, or audio files here</p>
-                  <p className="text-[10px] text-[#666] mt-0.5">Supports PNG, JPG, MP4, MOV, MP3 (Max 50MB)</p>
-                </div>
-                <label className="inline-block px-4 py-2 rounded-xl bg-[#1C1C1C] hover:bg-[#262626] text-xs font-bold text-white border border-[#333] cursor-pointer transition-colors">
-                  Upload file
-                  <input type="file" className="hidden" />
-                </label>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#202020]">
-              <Button variant="ghost" size="sm" onClick={() => setMediaModalOpen(false)}>
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Media Picker Modal */}
+      <MediaPickerModal
+        isOpen={mediaPickerOpen}
+        onClose={() => setMediaPickerOpen(false)}
+        onSelectMedia={() => {
+          setPromptInput((prev) => `${prev} [Attached Media Reference]`);
+        }}
+      />
 
       {/* Delete Modal */}
       {campaignToDelete && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-xs">
           <div className="p-6 rounded-2xl bg-[#121212] border border-[#282828] max-w-md w-full space-y-4 shadow-2xl">
             <h4 className="text-lg font-bold text-white">Delete Campaign</h4>
             <p className="text-xs text-[#888]">

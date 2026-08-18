@@ -3,18 +3,18 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { CampaignHeader } from '../../components/layout/workspace/CampaignHeader';
 import { CampaignNavTabs } from '../navigation/CampaignNavTabs';
-import { WorkspaceContainer } from '../../components/layout/workspace/WorkspaceContainer';
 import { WorkspaceLoadingSkeleton } from '../../components/ui/LoadingState';
-import { Button, Badge } from '../../components/ui';
+import { MediaPickerModal } from '../../components/ui/MediaPickerModal';
+import { Button } from '../../components/ui';
 import {
-  Sparkles,
-  Lightbulb,
-  CheckCircle2,
+  Upload,
+  Film,
+  Play,
+  Pause,
   ArrowRight,
-  MessageSquare,
-  Target,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
-
 
 interface CreativeConcept {
   id: string;
@@ -28,46 +28,45 @@ interface CreativeConcept {
   is_selected: boolean;
 }
 
-interface StrategyData {
-  id: string;
-  campaign_id: string;
-  target_audience_breakdown?: Record<string, unknown> | string;
-  value_propositions?: string[] | string;
-  emotional_triggers?: string[] | string;
-  messaging_pillars?: string[] | string;
-}
-
 interface StrategyResponse {
-  strategy: StrategyData;
+  strategy: any;
   concepts: CreativeConcept[];
 }
+
+const PRESET_OPTIONS = [
+  { id: 'tracking', name: 'TRACKING SHOT', style: 'Dynamic Camera Pan', model: 'Seedance 2.5' },
+  { id: 'minimalism', name: 'MINIMALISM CORPORATE', style: 'Crisp Studio Lighting', model: 'Seedance 2.5' },
+  { id: 'neon', name: 'NEON CYBERPUNK', style: 'Volumetric Midnight Glow', model: 'Kling 3.0 Ultra' },
+  { id: 'macro', name: 'MACRO SENSORY', style: '100mm Extreme Detail', model: 'Gemini Omni Flash' },
+];
 
 export function ConceptsWorkspaceView() {
   const { campaignId = '' } = useParams<{ campaignId: string }>();
   const navigate = useNavigate();
 
-  const [strategyData, setStrategyData] = useState<StrategyResponse | null>(null);
-  const [campaignName, setCampaignName] = useState<string>('Campaign Concepts');
+  const [campaignName, setCampaignName] = useState<string>('Creative Concepts');
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [isSelecting, setIsSelecting] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'create' | 'edit' | 'motion'>('create');
+  const [selectedPreset, setSelectedPreset] = useState<string>('tracking');
+  const [promptText, setPromptText] = useState<string>('Describe the commercial angle and visual transformation you want to achieve...');
+  const [audioEnabled, setAudioEnabled] = useState<boolean>(true);
+  const [mediaPickerOpen, setMediaPickerOpen] = useState<boolean>(false);
+  const [isPlayingDemo, setIsPlayingDemo] = useState<boolean>(false);
+  const [isLocking, setIsLocking] = useState<boolean>(false);
 
   const fetchConcepts = useCallback(async () => {
     if (!campaignId) return;
     setIsLoading(true);
-    setError(null);
     try {
-      // Get campaign name
       const campRes = await api.get(`/campaigns/${campaignId}`);
       if (campRes.data) setCampaignName(campRes.data.name);
 
-      // Get strategy & concepts
       const res = await api.get<StrategyResponse>(`/campaigns/${campaignId}/strategy`);
-      setStrategyData(res.data);
-    } catch (err: unknown) {
-      // If 404, strategy has not been generated yet
-      setStrategyData(null);
+      if (res.data?.concepts && res.data.concepts.length > 0) {
+        setPromptText(res.data.concepts[0].hook || res.data.concepts[0].title);
+      }
+    } catch {
+      // Fallback
     } finally {
       setIsLoading(false);
     }
@@ -77,245 +76,311 @@ export function ConceptsWorkspaceView() {
     fetchConcepts();
   }, [fetchConcepts]);
 
-  const handleGenerateStrategy = async () => {
-    setIsGenerating(true);
-    setError(null);
+  const handleLockConcept = async () => {
+    setIsLocking(true);
     try {
-      const res = await api.post<StrategyResponse>(`/campaigns/${campaignId}/strategy`);
-      setStrategyData(res.data);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Failed to generate creative concepts with Gemini.');
-      }
+      navigate(`/campaigns/${campaignId}/storyboard`);
+    } catch {
+      // Handle error
     } finally {
-      setIsGenerating(false);
+      setIsLocking(false);
     }
   };
 
-  const handleSelectConcept = async (conceptId: string) => {
-    setIsSelecting(conceptId);
-    setError(null);
-    try {
-      await api.post(`/campaigns/${campaignId}/concepts/${conceptId}/select`);
-      // Update local selection state
-      if (strategyData) {
-        setStrategyData({
-          ...strategyData,
-          concepts: strategyData.concepts.map((c) => ({
-            ...c,
-            is_selected: c.id === conceptId,
-          })),
-        });
-      }
-      // Navigate to Storyboard after brief delay
-      setTimeout(() => {
-        navigate(`/campaigns/${campaignId}/storyboard`);
-      }, 600);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Failed to select creative concept.');
-      }
-    } finally {
-      setIsSelecting(null);
-    }
-  };
+  const activePresetObj = PRESET_OPTIONS.find((p) => p.id === selectedPreset) || PRESET_OPTIONS[0];
 
   if (isLoading) {
     return (
-      <div className="flex-1 p-6 bg-[var(--bg-app)]">
+      <div className="flex-1 flex flex-col h-full bg-[#060606]">
         <WorkspaceLoadingSkeleton />
       </div>
     );
   }
 
-  const selectedConcept = strategyData?.concepts?.find((c) => c.is_selected);
-
-  const breadcrumbs = [
-    { label: 'Campaigns', onClick: () => navigate('/campaigns') },
-    { label: campaignName, onClick: () => navigate(`/campaigns/${campaignId}/overview`) },
-    { label: 'Creative Concepts', isCurrent: true },
-  ];
-
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-[var(--bg-app)] font-app">
-      {/* 1. Contextual Header */}
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#060606] font-app text-white select-none">
+      {/* Studio Header */}
       <CampaignHeader
         campaignName={campaignName}
-        status={selectedConcept ? 'strategy_generated' : 'draft'}
-        metadata="AI Market Strategy & Creative Angles • 4 Distinctive Hooks"
-        breadcrumbs={breadcrumbs}
-        primaryAction={{
-          label: isGenerating
-            ? 'Generating Angles...'
-            : strategyData
-            ? 'Regenerate Strategy'
-            : 'Generate AI Creative Concepts',
-          onClick: handleGenerateStrategy,
-          isLoading: isGenerating,
-          icon: <Sparkles className="h-4 w-4" />,
-        }}
+        status="strategy_generated"
+        metadata="Stage 3: 1-Click Creative Concept & Preset Studio"
+        breadcrumbs={[
+          { label: 'Workspace', onClick: () => navigate('/campaigns') },
+          { label: campaignName, onClick: () => navigate(`/campaigns/${campaignId}/overview`) },
+          { label: 'Concepts & Presets', isCurrent: true },
+        ]}
       />
 
-      {/* 2. Contextual Nav Tabs */}
       <CampaignNavTabs
         activeSection="concepts"
         onSelectSection={(sec) => navigate(`/campaigns/${campaignId}/${sec}`)}
       />
 
-      {/* 3. Main Workspace Body */}
-      <WorkspaceContainer layoutMode="full-width" className="space-y-6 max-w-7xl mx-auto pb-12">
-        {error && (
-          <div className="p-4 rounded-xl bg-[var(--color-destructive-bg)] border border-[var(--color-destructive)]/30 text-xs text-[var(--color-destructive)]">
-            {error}
-          </div>
-        )}
+      {/* Main Studio Body (Matches Screenshot 5) */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Creation Inspector (from Screenshot 5) */}
+        <aside className="w-80 sm:w-88 shrink-0 border-r border-[#1C1C1C] bg-[#0A0A0A] flex flex-col justify-between overflow-y-auto p-4 space-y-4">
+          <div className="space-y-4">
+            {/* Top Sub-tabs (Create Video / Edit Video / Motion Control) */}
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-[#121212] border border-[#222222]">
+              <button
+                type="button"
+                onClick={() => setActiveTab('create')}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === 'create' ? 'bg-[#1C1C1C] text-white shadow-sm' : 'text-[#777] hover:text-white'
+                }`}
+              >
+                Create Video
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('edit')}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === 'edit' ? 'bg-[#1C1C1C] text-white shadow-sm' : 'text-[#777] hover:text-white'
+                }`}
+              >
+                Edit Video
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('motion')}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === 'motion' ? 'bg-[#1C1C1C] text-white shadow-sm' : 'text-[#777] hover:text-white'
+                }`}
+              >
+                Motion Control
+              </button>
+            </div>
 
-        {/* Empty State: No Strategy Generated Yet */}
-        {!strategyData && (
-          <div className="py-12 max-w-2xl mx-auto text-center space-y-5">
-            <div className="h-16 w-16 rounded-2xl bg-[var(--brand-lime-muted)] border border-[var(--brand-lime)]/30 flex items-center justify-center text-[var(--brand-lime)] mx-auto shadow-lg">
-              <Lightbulb className="h-8 w-8" />
+            {/* Active Preset Banner */}
+            <div className="p-3.5 rounded-2xl bg-[#141414] border border-[#242424] flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold text-[#E7FE25] uppercase tracking-wider block">
+                  GENERAL
+                </span>
+                <span className="text-xs font-bold text-white">{activePresetObj.name}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => alert('Preset selector active')}
+                className="px-2.5 py-1 rounded-lg bg-[#202020] text-[11px] font-semibold text-white hover:bg-[#2A2A2A] cursor-pointer"
+              >
+                Change
+              </button>
             </div>
-            <div className="space-y-2">
-              <h2 className="text-xl font-bold text-[var(--text-primary)]">
-                Synthesize 4 Creative Angles with Gemini
-              </h2>
-              <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                The Context Engine will analyze your brand guidelines and generate 4 distinctive narrative angles: <em>Emotional Transformation</em>, <em>Problem-Agitation</em>, <em>Sensory Product Showcase</em>, and <em>Lifestyle Narrative</em>.
-              </p>
+
+            {/* Mode Switcher (References vs Extend Video) */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="flex-1 py-1.5 rounded-xl bg-[#1C1C1C] border border-[#333] text-xs font-bold text-white text-center"
+              >
+                References
+              </button>
+              <button
+                type="button"
+                className="flex-1 py-1.5 rounded-xl bg-[#121212] border border-[#202020] text-xs font-semibold text-[#777] hover:text-white text-center"
+              >
+                Extend Video
+              </button>
             </div>
+
+            {/* Reference Upload Box (triggers MediaPickerModal) */}
+            <div
+              onClick={() => setMediaPickerOpen(true)}
+              className="p-5 rounded-2xl border-2 border-dashed border-[#262626] hover:border-[#E7FE25]/50 bg-[#121212] flex flex-col items-center justify-center text-center space-y-1.5 cursor-pointer transition-colors"
+            >
+              <Upload className="h-5 w-5 text-[#E7FE25]" />
+              <span className="text-xs font-bold text-white">Add references</span>
+              <span className="text-[10px] text-[#666]">Image, Video or Audio</span>
+            </div>
+
+            {/* Prompt Textarea */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-[#777]">
+                Prompt
+              </label>
+              <textarea
+                rows={3}
+                value={promptText}
+                onChange={(e) => setPromptText(e.target.value)}
+                placeholder="Describe the visual change you want..."
+                className="w-full p-3 rounded-xl bg-[#141414] border border-[#242424] text-xs text-white placeholder:text-[#555] focus:outline-none focus:border-[#E7FE25] resize-none"
+              />
+
+              <div className="flex items-center justify-between text-xs pt-1">
+                <button
+                  type="button"
+                  onClick={() => setPromptText((prev) => `${prev} @Elements[ProductFocus]`)}
+                  className="px-2 py-0.5 rounded-md bg-[#1C1C1C] text-[11px] font-semibold text-[#AAA] hover:text-white cursor-pointer"
+                >
+                  @ Elements
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAudioEnabled(!audioEnabled)}
+                  className="flex items-center gap-1 text-[11px] text-[#888] hover:text-white cursor-pointer"
+                >
+                  {audioEnabled ? <Volume2 className="h-3 w-3 text-[#E7FE25]" /> : <VolumeX className="h-3 w-3" />}
+                  <span>Audio {audioEnabled ? 'On' : 'Off'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Model & Parameter Badges */}
+            <div className="space-y-2 pt-1 border-t border-[#1C1C1C]">
+              <div className="flex items-center justify-between p-2 rounded-xl bg-[#141414] border border-[#222]">
+                <span className="text-xs text-[#888]">Model</span>
+                <span className="text-xs font-bold text-white">{activePresetObj.model} ⚡</span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-1.5 text-center text-xs">
+                <div className="p-2 rounded-lg bg-[#141414] border border-[#222] font-semibold">5s</div>
+                <div className="p-2 rounded-lg bg-[#141414] border border-[#222] font-semibold">16:9</div>
+                <div className="p-2 rounded-lg bg-[#141414] border border-[#222] font-semibold">1080p</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sticky Bottom Generate Button (from Screenshot 5) */}
+          <div className="pt-3 border-t border-[#1C1C1C]">
             <Button
               variant="primary"
               size="lg"
-              onClick={handleGenerateStrategy}
-              isLoading={isGenerating}
-              leftIcon={<Sparkles className="h-4 w-4" />}
-              className="font-bold shadow-[0_0_20px_rgba(231,254,37,0.3)]"
+              onClick={handleLockConcept}
+              isLoading={isLocking}
+              className="w-full font-black text-sm py-3 bg-[#E7FE25] hover:bg-[#D5EC1E] text-black shadow-xl"
             >
-              Generate AI Marketing Strategy & Angles
+              Generate ⚡
             </Button>
           </div>
-        )}
+        </aside>
 
-        {/* Real Generated Concepts Grid */}
-        {strategyData && (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[var(--border-subtle)]">
-              <div>
-                <h3 className="text-sm font-bold text-[var(--text-primary)] tracking-tight">
-                  Choose Your Creative Commercial Angle
-                </h3>
-                <p className="text-xs text-[var(--text-muted)]">
-                  Select 1 angle to compile into the shot-by-shot 35mm storyboard.
-                </p>
+        {/* Center Canvas: "MAKE VIDEOS IN ONE CLICK" (from Screenshot 5) */}
+        <main className="flex-1 overflow-y-auto p-6 lg:p-10 space-y-8 bg-[#060606]">
+          <div className="max-w-4xl mx-auto space-y-8">
+            <div className="space-y-2">
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight uppercase">
+                MAKE VIDEOS IN ONE CLICK
+              </h2>
+              <p className="text-xs sm:text-sm text-[#888] max-w-xl">
+                250+ presets for camera control, framing, and high-quality VFX — or use the general preset for manual control.
+              </p>
+            </div>
+
+            {/* 3 Interactive Cards (from Screenshot 5) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
+              {/* Card 1: ADD IMAGE */}
+              <div className="p-6 rounded-3xl bg-[#0E0E0E] border border-[#202020] space-y-4 flex flex-col justify-between shadow-xl">
+                <div className="space-y-3">
+                  <div
+                    onClick={() => setMediaPickerOpen(true)}
+                    className="aspect-[4/3] rounded-2xl border-2 border-dashed border-[#2A2A2A] hover:border-[#E7FE25]/50 bg-[#141414] flex flex-col items-center justify-center text-center p-4 space-y-2 cursor-pointer transition-colors"
+                  >
+                    <Upload className="h-8 w-8 text-[#E7FE25]" />
+                    <span className="text-xs font-bold text-white uppercase tracking-wide">UPLOAD IMAGE</span>
+                    <span className="text-[10px] text-[#666]">or Paste from Clipboard</span>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white uppercase">ADD IMAGE</h4>
+                    <p className="text-xs text-[#888] mt-1">
+                      Upload or generate an image to start your animation.
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              {selectedConcept && (
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => navigate(`/campaigns/${campaignId}/storyboard`)}
-                  rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
-                  className="font-bold"
-                >
-                  Proceed to Storyboard Studio
-                </Button>
-              )}
-            </div>
+              {/* Card 2: CHOOSE PRESET (Yellow Border highlight from Screenshot 5) */}
+              <div className="p-6 rounded-3xl bg-[#0E0E0E] border-2 border-[#E7FE25] space-y-4 flex flex-col justify-between shadow-2xl relative">
+                <div className="absolute -top-3 right-4 px-2.5 py-0.5 rounded-full bg-[#E7FE25] text-black text-[10px] font-black uppercase tracking-wider">
+                  Active
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {strategyData.concepts.map((concept) => {
-                const isSelected = concept.is_selected;
-                const isPendingSelection = isSelecting === concept.id;
-
-                return (
-                  <div
-                    key={concept.id}
-                    className={`rounded-2xl p-6 border transition-all duration-200 flex flex-col justify-between space-y-4 ${
-                      isSelected
-                        ? 'bg-[var(--bg-surface)] border-[var(--brand-lime)] shadow-[0_0_20px_rgba(231,254,37,0.15)] ring-1 ring-[var(--brand-lime)]'
-                        : 'bg-[var(--bg-surface)] border-[var(--border-default)] hover:border-[var(--brand-lime)]/40 hover:bg-[var(--bg-surface-elevated)]'
-                    }`}
-                  >
-                    <div className="space-y-3">
-                      {/* Top Badges */}
-                      <div className="flex items-center justify-between">
-                        <Badge
-                          variant={isSelected ? 'lime' : 'outline'}
-                          size="sm"
-                          className="uppercase font-bold tracking-wider text-[10px]"
-                        >
-                          {concept.angle_type}
-                        </Badge>
-                        {isSelected && (
-                          <span className="flex items-center gap-1 text-[#12B886] font-bold text-xs">
-                            <CheckCircle2 className="h-4 w-4" />
-                            <span>Active Selection</span>
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Title */}
-                      <h4 className="text-base font-bold text-[var(--text-primary)]">
-                        {concept.title}
-                      </h4>
-
-                      {/* The Hook */}
-                      <div className="p-3 rounded-xl bg-[var(--bg-surface-sunken)] border border-[var(--border-subtle)] space-y-1">
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--brand-lime)]">
-                          <MessageSquare className="h-3 w-3" />
-                          <span>The Opening Hook (0–5s)</span>
-                        </div>
-                        <p className="text-xs italic text-[var(--text-secondary)] leading-relaxed">
-                          "{concept.hook}"
-                        </p>
-                      </div>
-
-                      {/* Narrative Arc */}
-                      <div className="space-y-1 text-xs">
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-                          Narrative Arc
-                        </span>
-                        <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed line-clamp-3">
-                          {concept.narrative_arc}
-                        </p>
-                      </div>
-
-                      {/* Style & Target Emotion Tags */}
-                      <div className="pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between text-[11px] text-[var(--text-muted)]">
-                        <span className="truncate max-w-[200px]">
-                          <strong>Style:</strong> {concept.visual_style}
-                        </span>
-                        <Badge variant="forest" size="sm">
-                          {concept.target_emotion}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    {/* Action Button */}
-                    <div className="pt-2">
-                      <Button
-                        variant={isSelected ? 'secondary' : 'primary'}
-                        size="md"
-                        onClick={() => handleSelectConcept(concept.id)}
-                        isLoading={isPendingSelection}
-                        leftIcon={isSelected ? <CheckCircle2 className="h-4 w-4 text-[#12B886]" /> : <Target className="h-4 w-4" />}
-                        className="w-full font-bold"
-                      >
-                        {isSelected ? 'Selected for Production' : 'Select This Concept'}
-                      </Button>
+                <div className="space-y-3">
+                  <div className="aspect-[4/3] rounded-2xl bg-[#141414] border border-[#2A2A2A] p-3 flex flex-col justify-between">
+                    <span className="text-[10px] font-bold text-[#E7FE25] uppercase">
+                      Preset: {activePresetObj.name}
+                    </span>
+                    <div className="text-center py-4">
+                      <Film className="h-8 w-8 text-white/50 mx-auto mb-1" />
+                      <span className="text-xs font-bold text-white">{activePresetObj.style}</span>
                     </div>
                   </div>
-                );
-              })}
+                  <div>
+                    <h4 className="text-sm font-bold text-white uppercase">CHOOSE PRESET</h4>
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {PRESET_OPTIONS.map((p) => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => setSelectedPreset(p.id)}
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer ${
+                            selectedPreset === p.id ? 'bg-[#E7FE25] text-black' : 'bg-[#181818] text-[#888] hover:text-white'
+                          }`}
+                        >
+                          {p.name.split(' ')[0]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 3: GET VIDEO */}
+              <div className="p-6 rounded-3xl bg-[#0E0E0E] border border-[#202020] space-y-4 flex flex-col justify-between shadow-xl">
+                <div className="space-y-3">
+                  <div className="aspect-[4/3] rounded-2xl bg-gradient-to-tr from-[#025745] to-[#013F32] border border-emerald-500/30 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setIsPlayingDemo(!isPlayingDemo)}
+                      className="h-12 w-12 rounded-full bg-[#E7FE25] hover:bg-[#D5EC1E] text-black flex items-center justify-center shadow-xl cursor-pointer transition-transform hover:scale-105"
+                    >
+                      {isPlayingDemo ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 fill-current ml-0.5" />}
+                    </button>
+                    <span className="absolute bottom-2 text-[10px] text-emerald-200 font-mono">
+                      4K • 60 FPS Result
+                    </span>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white uppercase">GET VIDEO</h4>
+                    <p className="text-xs text-[#888] mt-1">
+                      Click generate to create your final animated video!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Lock & Advance Button */}
+            <div className="flex items-center justify-between p-5 rounded-2xl bg-[#0E0E0E] border border-[#1E1E1E]">
+              <div className="space-y-0.5">
+                <h4 className="text-xs font-bold text-white">Approved Concept: {activePresetObj.name}</h4>
+                <p className="text-[11px] text-[#777]">
+                  Advance with the selected preset into multi-shot scene storyboard decomposition.
+                </p>
+              </div>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={handleLockConcept}
+                rightIcon={<ArrowRight className="h-4 w-4" />}
+                className="font-bold px-6 shadow-md"
+              >
+                Proceed to Storyboard
+              </Button>
             </div>
           </div>
-        )}
-      </WorkspaceContainer>
+        </main>
+      </div>
+
+      {/* Media Picker Modal */}
+      <MediaPickerModal
+        isOpen={mediaPickerOpen}
+        onClose={() => setMediaPickerOpen(false)}
+        onSelectMedia={() => {
+          setPromptText((prev) => `${prev} [Attached Reference Image]`);
+        }}
+      />
     </div>
   );
 }
