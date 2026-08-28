@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 from sqlalchemy.orm import Session
@@ -37,7 +37,7 @@ class MasterVideoRepository:
             existing.storage_path = storage_path
             existing.url = url
             existing.file_size_bytes = file_size_bytes
-            existing.completed_at = datetime.utcnow()
+            existing.completed_at = datetime.now(timezone.utc)
             db.commit()
             db.refresh(existing)
             return existing
@@ -54,7 +54,7 @@ class MasterVideoRepository:
             storage_path=storage_path,
             url=url,
             file_size_bytes=file_size_bytes,
-            completed_at=datetime.utcnow(),
+            completed_at=datetime.now(timezone.utc),
         )
         db.add(master)
         db.commit()

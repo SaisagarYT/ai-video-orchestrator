@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 from sqlalchemy.orm import Session
 
@@ -89,7 +89,7 @@ class RenderWorker:
             job.status = "COMPLETED"
             job.progress = 100
             job.output_video_id = final_video.id
-            job.completed_at = datetime.utcnow()
+            job.completed_at = datetime.now(timezone.utc)
 
             # 7. Update Campaign Status
             campaign = db.query(Campaign).filter(Campaign.id == job.campaign_id).first()

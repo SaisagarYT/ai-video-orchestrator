@@ -72,8 +72,7 @@ class AssetEvaluation(Base):
         onupdate=datetime.utcnow,
         nullable=False,
     )
-
-    # Relationships
+    
     asset = relationship(
         "Asset",
         back_populates="evaluation",

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 from sqlalchemy.orm import Session, joinedload
 
@@ -122,7 +122,7 @@ class JobWorker:
             # 7. Complete Generation Job
             job.status = "completed"
             job.progress = 100
-            job.completed_at = datetime.utcnow()
+            job.completed_at = datetime.now(timezone.utc)
 
             # 8. Update Scene asset URL if selected
             if is_first_asset:

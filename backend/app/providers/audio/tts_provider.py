@@ -40,6 +40,27 @@ class ElevenLabsAudioProvider(BaseAudioProvider):
 
         return asyncio.run(_synthesize())
 
+    def _generate_synthetic_tone(self, duration: float = 3.0) -> bytes:
+        import subprocess
+        with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_out:
+            temp_path = temp_out.name
+        try:
+            cmd = [
+                "ffmpeg", "-y",
+                "-f", "lavfi", "-i", f"sine=f=440:r=44100:d={duration}",
+                "-c:a", "libmp3lame",
+                "-b:a", "128k",
+                temp_path,
+            ]
+            subprocess.run(cmd, capture_output=True, check=True)
+            with open(temp_path, "rb") as f:
+                return f.read()
+        except Exception:
+            return b"\xff\xfb\x90\x44" + (b"\x00" * 4096)
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+
     def generate_audio(
         self,
         narration_text: str,
@@ -80,7 +101,7 @@ class ElevenLabsAudioProvider(BaseAudioProvider):
                         "similarity_boost": 0.75,
                     },
                 }
-                response = requests.post(url, json=data, headers=headers, timeout=25)
+                response = requests.post(url, json=data, headers=headers, timeout=5)
                 if response.status_code == 200 and len(response.content) > 100:
                     return response.content, "audio/mpeg"
                 else:
@@ -92,10 +113,11 @@ class ElevenLabsAudioProvider(BaseAudioProvider):
         try:
             edge_voice = "en-US-ChristopherNeural" if "Deep" in voice_profile or "Male" in voice_profile else "en-US-JennyNeural"
             audio_bytes = self._generate_with_edge_tts(text, voice=edge_voice)
-            return audio_bytes, "audio/mpeg"
+            if len(audio_bytes) > 200:
+                return audio_bytes, "audio/mpeg"
+            raise ValueError("Edge-TTS returned insufficient audio length")
         except Exception as e:
-            print(f"[Edge-TTS Fallback Error] {e}")
-            mp3_header = b"\xff\xfb\x90\x44\x00\x00\x00\x00"
-            return mp3_header + f"TTS_VOICEOVER_{text[:40]}".encode(), "audio/mpeg"
+            print(f"[Edge-TTS Fallback Error] {e}. Generating synthetic audio track.")
+            return self._generate_synthetic_tone(duration=3.5), "audio/mpeg"
 
 

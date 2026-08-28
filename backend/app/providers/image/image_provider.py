@@ -43,7 +43,7 @@ class FluxImageProvider(BaseImageProvider):
                 f"https://image.pollinations.ai/prompt/{encoded_prompt}"
                 f"?width={width}&height={height}&model=flux&seed={seed}&nologo=true&enhance=true"
             )
-            response = requests.get(pollinations_url, timeout=30)
+            response = requests.get(pollinations_url, timeout=(1.5, 2.5))
             if response.status_code == 200 and len(response.content) > 5000:
                 return response.content, "image/jpeg"
         except Exception as e:
@@ -55,7 +55,7 @@ class FluxImageProvider(BaseImageProvider):
                 hf_url = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
                 headers = {"Authorization": f"Bearer {self.hf_token}"}
                 payload = {"inputs": clean_prompt[:200]}
-                hf_res = requests.post(hf_url, headers=headers, json=payload, timeout=30)
+                hf_res = requests.post(hf_url, headers=headers, json=payload, timeout=5)
                 if hf_res.status_code == 200 and len(hf_res.content) > 5000:
                     return hf_res.content, "image/jpeg"
             except Exception as e:
