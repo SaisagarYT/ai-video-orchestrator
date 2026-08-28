@@ -1,89 +1,16 @@
+
 @import "tailwindcss";
-@import "./styles/tokens.css";
 
-@layer base {
-  body {
-    background-color: var(--bg-app);
-    color: var(--text-primary);
-    font-family: var(--font-app);
-    overflow-x: hidden;
-    margin: 0;
-    padding: 0;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    transition: background-color var(--transition-normal), color var(--transition-normal);
-  }
 
-  /* Accessible focus indicators */
-  :focus-visible {
-    outline: 2px solid var(--border-focus);
-    outline-offset: 2px;
-  }
+:root{
+  --white:#fdfdfd;
+  --gray:#f5f5f5;
+  --light-blue:#116af2;
+  --dark-blue:#0531aa;
+  --black:#00010c;
 }
 
-/* Typography Utility Classes */
-.font-editorial {
-  font-family: var(--font-editorial);
-}
 
-.font-app {
-  font-family: var(--font-app);
-}
-
-.font-mono-code {
-  font-family: var(--font-mono);
-}
-
-/* Legacy aliases to preserve existing landing page components */
-.font-serif-display {
-  font-family: var(--font-editorial);
-}
-
-.font-sans-body {
-  font-family: var(--font-app);
-}
-
-/* Custom Surface Utilities */
-.surface-card {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-}
-
-.surface-elevated {
-  background-color: var(--bg-surface-elevated);
-  border: 1px solid var(--border-default);
-}
-
-.surface-sunken {
-  background-color: var(--bg-surface-sunken);
-  border: 1px solid var(--border-subtle);
-}
-
-/* Smooth Infinite Marquee Animations */
-@keyframes marquee-left {
-  0% {
-    transform: translateX(0%);
-  }
-  100% {
-    transform: translateX(-33.3333%);
-  }
-}
-
-@keyframes marquee-right {
-  0% {
-    transform: translateX(-33.3333%);
-  }
-  100% {
-    transform: translateX(0%);
-  }
-}
-
-.animate-marquee-left {
-  animation: marquee-left 35s linear infinite;
-  will-change: transform;
-}
-
-.animate-marquee-right {
-  animation: marquee-right 35s linear infinite;
-  will-change: transform;
+*{
+  box-sizing: border-box;
 }
