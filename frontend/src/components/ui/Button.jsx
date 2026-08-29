@@ -1,4 +1,5 @@
 import React from 'react';
+import { Icon } from '@iconify/react';
 
 /**
  * Reusable Button component.
@@ -20,7 +21,7 @@ const styles = {
     gap: '8px',
     fontFamily: 'inherit',
     fontWeight: '600',
-    borderRadius: 'var(--radius-md)',
+    borderRadius: '12px',
     border: 'none',
     cursor: 'pointer',
     transition: 'background 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease',
@@ -95,17 +96,12 @@ const Button = ({
       }}
     >
       {loading && (
-        <span
-          style={{
-            width: '14px',
-            height: '14px',
-            border: '2px solid rgba(255,255,255,0.4)',
-            borderTopColor: '#fff',
-            borderRadius: '50%',
-            animation: 'spin 0.7s linear infinite',
-            display: 'inline-block',
-            flexShrink: 0,
-          }}
+        <Icon 
+          icon="lucide:loader-2" 
+          width="16" 
+          height="16" 
+          className="animate-spin" 
+          style={{ animation: 'spin 0.7s linear infinite' }}
         />
       )}
       {children}
