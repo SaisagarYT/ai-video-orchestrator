@@ -1,7 +1,14 @@
-@import "tailwindcss";
+/* ─── Google Font Imports ─────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&display=swap');
 
 /* ─── Design Tokens ────────────────────────────────────────────────────────── */
 :root {
+  /* Typography Systems */
+  --font-serif:     'Instrument Serif', Georgia, serif;
+  --font-body:      'Roboto Condensed', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display:   'Roboto Condensed', -apple-system, sans-serif;
+  --font-mono:      'Roboto Mono', monospace;
+
   /* Page */
   --bg-page:        #EDEDFC;   /* very light lavender — entire page background */
   --bg-surface:     #FFFFFF;   /* white card / panel surface */
@@ -46,12 +53,22 @@
   padding: 0;
 }
 
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
-  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-body);
   background-color: var(--bg-page);
   color: var(--text-heading);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
-/* ─── Google Font import ─────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+button, input, textarea, select {
+  font-family: var(--font-body);
+}
