@@ -1,16 +1,57 @@
-
 @import "tailwindcss";
 
+/* ─── Design Tokens ────────────────────────────────────────────────────────── */
+:root {
+  /* Page */
+  --bg-page:        #EDEDFC;   /* very light lavender — entire page background */
+  --bg-surface:     #FFFFFF;   /* white card / panel surface */
+  --bg-surface-alt: #F9FAFB;   /* social buttons, subtle surfaces */
 
-:root{
-  --white:#fdfdfd;
-  --gray:#f5f5f5;
-  --light-blue:#116af2;
-  --dark-blue:#0531aa;
-  --black:#00010c;
+  /* Brand gradient (left panel card) */
+  --grad-cyan:      #89D4F5;   /* top-left of gradient card */
+  --grad-blue:      #4B70E8;   /* center of gradient card */
+  --grad-violet:    #6B2FD9;   /* bottom-right of gradient card */
+
+  /* Primary action */
+  --primary:        #4F46E5;   /* CTA button, links, accent icons */
+  --primary-dark:   #3730A3;   /* hover / pressed state */
+  --primary-light:  #EEF2FF;   /* very light tint for badges, tags */
+
+  /* Typography */
+  --text-heading:   #0F0F1A;   /* h1, h2 — near-black */
+  --text-body:      #6B7280;   /* body copy, sub-labels */
+  --text-muted:     #9CA3AF;   /* placeholders, dividers, helper text */
+  --text-on-dark:   #FFFFFF;   /* text on gradient panel or dark surfaces */
+
+  /* Form */
+  --border:         #E5E7EB;   /* input borders, card borders */
+  --border-focus:   #4F46E5;   /* focused input ring */
+
+  /* Feedback */
+  --error:          #EF4444;
+  --success:        #22C55E;
+
+  /* Misc */
+  --radius-sm:      6px;
+  --radius-md:      10px;
+  --radius-lg:      16px;
+  --radius-xl:      24px;
+  --shadow-card:    0 4px 24px rgba(79, 70, 229, 0.08), 0 1px 4px rgba(0,0,0,0.06);
 }
 
-
-*{
+/* ─── Reset ─────────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
+
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-page);
+  color: var(--text-heading);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Google Font import ─────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
