@@ -1,6 +1,10 @@
 import json
 from typing import Any, Dict
 import requests
+try:
+    import requests
+except ImportError:
+    requests = None
 
 from app.core.config import settings
 from app.providers.base import BaseTextProvider

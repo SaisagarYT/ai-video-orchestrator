@@ -1,7 +1,23 @@
-# Ignored documentation and reference assets
+# Dependencies
+node_modules/
+**/node_modules/
+package-lock.json
+*-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.env
+
+# Documentation, reference assets, and research papers
+doc/
 documents/
 Ref-Images/
 ref-images/
+*.pdf
 
 # Progress and AI notes
 Progress.md
@@ -13,8 +29,21 @@ __pycache__/
 *$py.class
 .venv/
 venv/
-.env
+.pytest_cache/
 
-# Logs and scratch
+# Logs, scratch, and system generated
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 scratch/
+.system_generated/
+
+# Build artifacts and temp
+dist/
+build/
+coverage/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,6 +1,11 @@
 import json
 from typing import Any, Dict
 from google import genai
+try:
+    from google import genai
+except ImportError:
+    genai = None
+
 from app.core.config import settings
 from app.providers.base import BaseTextProvider
 
@@ -13,6 +18,7 @@ class GeminiTextProvider(BaseTextProvider):
     def __init__(self):
         self.api_key = settings.GEMINI_API_KEY
         self.client = genai.Client(api_key=self.api_key) if self.api_key else None
+        self.client = genai.Client(api_key=self.api_key) if (genai and self.api_key) else None
         self.model_name = "gemini-2.5-flash"
 
     def generate_text(

@@ -3,6 +3,10 @@ import subprocess
 import tempfile
 from typing import Tuple
 import requests
+try:
+    import requests
+except ImportError:
+    requests = None
 
 from app.core.config import settings
 from app.providers.base import BaseVideoProvider

@@ -3,6 +3,15 @@ import urllib.parse
 from typing import Tuple
 from PIL import Image, ImageDraw
 import requests
+try:
+    from PIL import Image, ImageDraw
+except ImportError:
+    Image, ImageDraw = None, None
+
+try:
+    import requests
+except ImportError:
+    requests = None
 
 from app.core.config import settings
 from app.providers.base import BaseImageProvider

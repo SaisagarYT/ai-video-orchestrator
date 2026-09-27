@@ -1,8 +1,26 @@
-venv/
-__pycache__/
-*.pyc
+# Dependencies
+node_modules/
+package-lock.json
+*-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Environment
 .env
-.vscode/
-.pytest_cache/
+.env.*
+!.env.example
+
+# Python
+venv/
 .venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Logs and builds
+dist/
+coverage/
+*.log
+.vscode/
 Progress.md

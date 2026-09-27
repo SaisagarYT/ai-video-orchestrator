@@ -5,6 +5,20 @@ from typing import Tuple
 import edge_tts
 from openai import OpenAI
 import requests
+try:
+    import edge_tts
+except ImportError:
+    edge_tts = None
+
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None
+
+try:
+    import requests
+except ImportError:
+    requests = None
 
 from app.core.config import settings
 from app.providers.base import BaseAudioProvider
@@ -20,6 +34,7 @@ class ElevenLabsAudioProvider(BaseAudioProvider):
         self.eleven_api_key = settings.ELEVENLABS_API_KEY
         self.openai_api_key = settings.OPENAI_API_KEY
         self.openai_client = OpenAI(api_key=self.openai_api_key) if self.openai_api_key else None
+        self.openai_client = OpenAI(api_key=self.openai_api_key) if (OpenAI and self.openai_api_key) else None
         # Predefined popular ElevenLabs voice IDs (e.g. 'Adam', 'Rachel', 'Bella')
         self.default_voice_id = "21m00Tcm4TlvDq8ikWAM"  # Rachel (clean commercial voice)
 

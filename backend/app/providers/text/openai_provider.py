@@ -1,6 +1,10 @@
 import json
 from typing import Any, Dict
 from openai import OpenAI
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None
 
 from app.core.config import settings
 from app.providers.base import BaseTextProvider
@@ -14,6 +18,7 @@ class OpenAITextProvider(BaseTextProvider):
     def __init__(self):
         self.api_key = settings.OPENAI_API_KEY
         self.client = OpenAI(api_key=self.api_key) if self.api_key else None
+        self.client = OpenAI(api_key=self.api_key) if (OpenAI and self.api_key) else None
         self.model_name = "gpt-4o-mini"
 
     def generate_text(

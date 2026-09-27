@@ -1,0 +1,64 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
+export const config = {
+  port: parseInt(process.env.PORT || '8000', 10),
+  nodeEnv: process.env.NODE_ENV || 'development',
+  isTest: process.env.NODE_ENV === 'test',
+  isProduction: process.env.NODE_ENV === 'production',
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+
+  // Supabase Configuration
+  supabase: {
+    url: process.env.SUPABASE_URL,
+    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    anonKey: process.env.SUPABASE_ANON_KEY,
+    isConfigured: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY),
+  },
+
+  // Upstash Redis (Optional / Transient)
+  redis: {
+    url: process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    isConfigured: Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN),
+  },
+
+  // AI & Media Providers Configuration
+  ai: {
+    // LLM
+    llmProvider: process.env.AI_LLM_PROVIDER || 'mock',
+    openrouterApiKey: process.env.OPENROUTER_API_KEY,
+    openrouterBaseUrl: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
+    openrouterDefaultModel: process.env.OPENROUTER_DEFAULT_MODEL || 'anthropic/claude-3.5-sonnet',
+    timeoutMs: parseInt(process.env.AI_TIMEOUT_MS || '60000', 10),
+
+    // Video (Fal.ai / Mock)
+    videoProvider: process.env.AI_VIDEO_PROVIDER || 'mock',
+    falApiKey: process.env.FAL_API_KEY || process.env.FAL_KEY,
+    falVideoModel: process.env.FAL_VIDEO_MODEL || 'fal-ai/fast-svd',
+    videoTimeoutMs: parseInt(process.env.AI_VIDEO_TIMEOUT_MS || '120000', 10),
+    videoPollIntervalMs: parseInt(process.env.AI_VIDEO_POLL_INTERVAL_MS || '1500', 10),
+    videoMaxPollTimeMs: parseInt(process.env.AI_VIDEO_MAX_POLL_TIME_MS || '300000', 10),
+
+    // Audio (ElevenLabs / Mock)
+    audioProvider: process.env.AI_AUDIO_PROVIDER || 'mock',
+    elevenlabsApiKey: process.env.ELEVENLABS_API_KEY,
+    elevenlabsVoiceId: process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM',
+    elevenlabsModel: process.env.ELEVENLABS_MODEL || 'eleven_multilingual_v2',
+    audioTimeoutMs: parseInt(process.env.AI_AUDIO_TIMEOUT_MS || '60000', 10),
+
+    // Storage (Cloudinary / Mock)
+    storageProvider: process.env.AI_STORAGE_PROVIDER || 'mock',
+    cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    cloudinaryApiKey: process.env.CLOUDINARY_API_KEY,
+    cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET,
+    storageTimeoutMs: parseInt(process.env.AI_STORAGE_TIMEOUT_MS || '60000', 10),
+  },
+
+  // Queue Configuration
+  queue: {
+    concurrency: parseInt(process.env.QUEUE_CONCURRENCY || '2', 10),
+  },
+};
+
+export default config;
