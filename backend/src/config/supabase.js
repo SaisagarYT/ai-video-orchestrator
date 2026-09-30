@@ -19,6 +19,9 @@ class MemoryDatabaseStore {
       workflow_events: new Map(),
       provider_jobs: new Map(),
       assets: new Map(),
+      timelines: new Map(),
+      render_jobs: new Map(),
+      final_videos: new Map(),
     };
   }
 
@@ -180,6 +183,21 @@ class MemoryQueryBuilder {
                   data: null,
                   error: {
                     message: 'Unique constraint failed on provider_jobs.idempotency_key',
+                    code: '23505',
+                  },
+                };
+                return resolve ? resolve(res) : res;
+              }
+            }
+          }
+
+          if (this.tableName === 'render_jobs' && row.idempotency_key) {
+            for (const existing of table.values()) {
+              if (existing.idempotency_key === row.idempotency_key && existing.id !== row.id) {
+                const res = {
+                  data: null,
+                  error: {
+                    message: 'Unique constraint failed on render_jobs.idempotency_key',
                     code: '23505',
                   },
                 };

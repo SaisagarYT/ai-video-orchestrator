@@ -7,6 +7,7 @@ import { promptCompilerService } from '../services/prompt/prompt-compiler.servic
 import { sceneGenerationService } from '../services/media/scene-generation.service.js';
 import { narrationGenerationService } from '../services/media/narration-generation.service.js';
 import { assetService } from '../services/media/asset.service.js';
+import { renderService } from '../services/rendering/index.js';
 
 const defaultStepHandlers = {
   CONTEXT_INGESTION: async (step, context) => {
@@ -236,6 +237,134 @@ const defaultStepHandlers = {
         url: a.url,
         storageProvider: a.storage_provider,
       })),
+    };
+  },
+
+  TIMELINE_BUILD: async (step, context) => {
+    const campaign = context.campaign || {};
+    const executionId = step.execution_id;
+    const workflowScenes = context.screenwriter?.scenes || [];
+
+    const { timeline, timelineIR, reused } = await renderService.buildAndPersistTimeline({
+      campaignId: campaign.id,
+      executionId,
+      stepId: step.id,
+      scenes: workflowScenes,
+      outputConfig: {
+        aspectRatio: campaign.aspect_ratio || '9:16',
+      },
+    });
+
+    return {
+      timelineId: timeline.id,
+      durationMs: timeline.duration_ms,
+      outputConfig: timeline.output_config,
+      totalScenes: timelineIR.tracks.find((t) => t.type === 'video')?.items.length || 0,
+      reused: Boolean(reused),
+      status: 'READY',
+    };
+  },
+
+  VIDEO_RENDER: async (step, context) => {
+    const campaign = context.campaign || {};
+    const executionId = step.execution_id;
+
+    let timelineId = context.timelineBuild?.timelineId;
+    if (!timelineId) {
+      const { data: timelines } = await supabase
+        .from('timelines')
+        .select('id')
+        .eq('campaign_id', campaign.id)
+        .eq('workflow_execution_id', executionId);
+      if (timelines && timelines.length > 0) {
+        timelineId = timelines[0].id;
+      }
+    }
+
+    if (!timelineId) {
+      throw new Error('Cannot execute VIDEO_RENDER: timelineId not found in workflow context or database');
+    }
+
+    const { job, renderResult, storageAsset, finalVideo, reused } = await renderService.renderTimeline({
+      campaignId: campaign.id,
+      executionId,
+      stepId: step.id,
+      timelineId,
+      rendererName: campaign.renderer || null,
+      idempotencyKey: `${campaign.id}:${executionId}:render:v1`,
+    });
+
+    return {
+      jobId: job.id,
+      timelineId,
+      renderer: job.renderer,
+      status: job.status,
+      videoUrl: storageAsset?.secureUrl || storageAsset?.url,
+      renderResult,
+      storageAsset,
+      finalVideo,
+      reused: Boolean(reused),
+    };
+  },
+
+  FINAL_VIDEO_PERSISTENCE: async (step, context) => {
+    const campaign = context.campaign || {};
+    const executionId = step.execution_id;
+
+    let timelineId = context.timelineBuild?.timelineId;
+    let renderOutput = context.videoRender || {};
+
+    if (!timelineId || !renderOutput.jobId) {
+      const { data: jobs } = await supabase
+        .from('render_jobs')
+        .select('*')
+        .eq('campaign_id', campaign.id)
+        .eq('workflow_execution_id', executionId)
+        .eq('status', 'COMPLETED');
+      if (jobs && jobs.length > 0) {
+        const completedJob = jobs[0];
+        timelineId = timelineId || completedJob.timeline_id;
+        renderOutput = {
+          jobId: completedJob.id,
+          renderResult: completedJob.metadata?.renderResult || {
+            renderer: completedJob.renderer,
+            durationMs: campaign.duration_seconds ? campaign.duration_seconds * 1000 : 15000,
+            width: 1080,
+            height: 1920,
+            format: 'mp4',
+            mimeType: 'video/mp4',
+          },
+          storageAsset: {
+            url: completedJob.metadata?.storageUrl || 'https://mock.storage/final.mp4',
+            secureUrl: completedJob.metadata?.storageUrl || 'https://mock.storage/final.mp4',
+            provider: 'cloudinary',
+            id: completedJob.output_asset_id,
+          },
+        };
+      }
+    }
+
+    const finalVideo = await renderService.persistFinalVideo({
+      campaignId: campaign.id,
+      executionId,
+      stepId: step.id,
+      timelineId,
+      renderJobId: renderOutput.jobId,
+      renderResult: renderOutput.renderResult,
+      storageAsset: renderOutput.storageAsset,
+    });
+
+    return {
+      finalVideoId: finalVideo.id,
+      campaignId: campaign.id,
+      timelineId,
+      renderJobId: renderOutput.jobId,
+      url: finalVideo.secure_url || finalVideo.url,
+      durationMs: finalVideo.duration_ms,
+      width: finalVideo.width,
+      height: finalVideo.height,
+      status: finalVideo.status,
+      completedAt: finalVideo.completed_at,
     };
   },
 };

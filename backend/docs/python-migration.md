@@ -26,7 +26,9 @@ In accordance with architectural directives:
 | **LLM Inference Providers** | `app/providers/text/` (`gemini_provider.py`, `openai_provider.py`, `omniroute_provider.py`) | `src/providers/llm/` (`llm.provider.js`, `openrouter.provider.js`, `mock-llm.provider.js`) | **Migrated & Verified** | Centralized via `ProviderRegistry`. Implements native fetch, timeout abort, error mapping, and token tracking. |
 | **Image / Video / Audio Providers** | `app/providers/image/`, `app/providers/video/`, `app/providers/audio/` | `src/providers/` (`video/fal-video.provider.js`, `audio/elevenlabs-audio.provider.js`, `storage/cloudinary.provider.js`), `src/services/media/` | **Migrated & Verified (Slice 4)** | Real Fal.ai video generation with bounded polling, ElevenLabs voiceover synthesis, Cloudinary durable mirroring with SSRF protection, and `provider_jobs`/`assets` ledger. |
 | **Queue & Worker Daemon** | `app/workers/` (`job_worker.py`, `render_worker.py`, `worker_daemon.py`), Redis | `src/orchestration/queue.js`, `src/orchestration/engine.js` | **Migrated & Verified** | `MemoryQueueAdapter` enforces concurrency and events; Supabase PostgreSQL stores durable steps; crash recovery implemented. |
-| **Data Persistence** | `app/models/` (SQLAlchemy / SQLite) | `src/config/supabase.js`, `supabase/migrations/` | **Migrated & Verified** | Full Supabase schema (`campaigns`, `workflow_executions`, `workflow_steps`, `workflow_events`, `users`, `provider_jobs`, `assets`). |
+| **Timeline Construction & IR** | `app/services/timeline_builder.py` | `src/services/timeline/` (`timeline.schema.js`, `timeline.builder.js`, `timeline.validator.js`, `timeline.types.js`) | **Migrated & Verified (Slice 5)** | Canonical Timeline IR v1.0, deterministic scene ordering, asset matching, audio alignment, Zod validation. |
+| **Video Rendering & FFmpeg** | `app/workers/render_worker.py`, FFmpeg scripts | `src/services/rendering/` (`renderer.registry.js`, `mock-renderer.js`, `ffmpeg-renderer.js`, `render.service.js`) | **Migrated & Verified (Slice 5)** | Pluggable renderer abstraction, MockRenderer for offline runs, secure argument-array FFmpegRenderer, Cloudinary persistence, durable `render_jobs` and `final_videos` with full provenance. |
+| **Data Persistence** | `app/models/` (SQLAlchemy / SQLite) | `src/config/supabase.js`, `supabase/migrations/` | **Migrated & Verified** | Full Supabase schema (`campaigns`, `workflow_executions`, `workflow_steps`, `workflow_events`, `users`, `provider_jobs`, `assets`, `timelines`, `render_jobs`, `final_videos`). |
 | **API Transport & Routing** | `app/api/` (FastAPI) | `src/routes/`, `src/controllers/`, `src/app.js` | **Migrated & Verified** | Clean Express routes for Campaigns, Health, Auth, SSE progress streaming, and Generation dispatch. |
 
 ---
@@ -34,7 +36,7 @@ In accordance with architectural directives:
 ## 3. Test Coverage & Verification
 
 All automated tests run via `node --test`:
-- **76 total tests across 21 suites**
+- **102 total tests across 26 suites**
 - **100% pass rate**
 - **0 external credentials required**
 
@@ -51,21 +53,35 @@ All automated tests run via `node --test`:
 10. `tests/unit/prompt-compiler.service.test.js`: Generation specification compilation for video engines.
 11. `tests/unit/scene-generation.service.test.js`: Scene video generation, durable `provider_jobs` tracking, storage mirroring, and idempotency.
 12. `tests/unit/narration-generation.service.test.js`: Narration synthesis, `provider_jobs` tracking, `assets` persistence, and idempotency.
-13. `tests/unit/queue.test.js`: Queue concurrency, event emission, failure recording.
-14. `tests/unit/auth.middleware.test.js`: Bearer token validation and SSE token extraction.
-15. `tests/unit/stepRunner.test.js`: Step execution lifecycle, retries, and failure states.
-16. `tests/unit/engine.test.js`: Workflow execution lifecycle and idempotency.
-17. `tests/integration/campaign.api.test.js`: Campaign CRUD, multi-tenant user isolation, generation dispatch.
-18. `tests/integration/sse.test.js`: Server-Sent Events historical replay and live event streaming.
-19. `tests/integration/recovery.test.js`: Crash recovery for orphaned workflows on startup.
-20. `tests/integration/workflow.intelligence.test.js`: E2E workflow run verifying that all 6 stage artifacts in PostgreSQL contain the migrated intelligence structures.
-21. `tests/integration/workflow.media.test.js`: Complete 9-stage E2E pipeline verifying video, audio, and asset provenance in PostgreSQL.
+13. `tests/unit/timeline.schema.test.js`: Canonical Timeline IR schema validation, negative duration, continuity, and trim checks.
+14. `tests/unit/timeline.builder.test.js`: Deterministic sequence sorting, asset matching, audio alignment, aspect ratio scaling.
+15. `tests/unit/renderer.test.js`: RendererRegistry, MockRenderer deterministic offline render, FFmpeg argument construction and security.
+16. `tests/unit/render.service.test.js`: Timeline persistence, durable render jobs, idempotency, StorageProvider upload, and final video provenance.
+17. `tests/unit/queue.test.js`: Queue concurrency, event emission, failure recording.
+18. `tests/unit/auth.middleware.test.js`: Bearer token validation and SSE token extraction.
+19. `tests/unit/stepRunner.test.js`: Step execution lifecycle, retries, and failure states.
+20. `tests/unit/engine.test.js`: Workflow execution lifecycle and idempotency.
+21. `tests/integration/campaign.api.test.js`: Campaign CRUD, multi-tenant user isolation, generation dispatch.
+22. `tests/integration/sse.test.js`: Server-Sent Events historical replay and live event streaming.
+23. `tests/integration/recovery.test.js`: Crash recovery for orphaned workflows on startup.
+24. `tests/integration/workflow.intelligence.test.js`: E2E workflow run verifying that all 6 stage artifacts in PostgreSQL contain the migrated intelligence structures.
+25. `tests/integration/workflow.media.test.js`: Complete 9-stage E2E pipeline verifying video, audio, and asset provenance in PostgreSQL.
+26. `tests/integration/workflow.render.test.js`: Complete 12-stage E2E pipeline verifying full advertisement rendering, timeline, render job, and final video in PostgreSQL.
 
 ---
 
-## 4. Next Steps (Slice 5)
+## 4. Pending Migration & Non-Migrated Components
 
-- Final timeline composition and video stitching (FFmpeg pipeline).
-- Subtitle generation and automated burner.
-- Lip-sync and audio track mixing.
-- Final render export and notification webhooks.
+The following components remain in the legacy Python codebase and have **NOT** been decommissioned or deleted:
+- **Quality Evaluation & QA Engine (`evaluation_engine.py`)**: Video quality scoring, brand guideline verification, visual consistency analysis.
+- **Social Media Publishing Integrations**: TikTok API, Meta Ads, Instagram publishing, YouTube Shorts export.
+- **Autonomous Feedback Loops**: Autonomous prompt revision based on evaluation scores.
+- **Legacy Python files**: All 96 `.py` files remain untouched in `backend/app/` as architectural reference.
+
+---
+
+## 5. Next Steps (Slice 6)
+
+- Autonomous quality evaluation and brand consistency scoring (`evaluation_engine.py` migration).
+- Subtitle generation and burned-in captions.
+- Advanced audio mixing and background music ducking.

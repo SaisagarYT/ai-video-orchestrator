@@ -24,3 +24,5 @@ coverage/
 *.log
 .vscode/
 Progress.md
+temp/
+tmp/

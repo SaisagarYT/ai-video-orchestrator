@@ -18,6 +18,18 @@ export class AppError extends Error {
     this.isOperational = true;
     Error.captureStackTrace(this, this.constructor);
   }
+
+  static badRequest(message, details = null) {
+    return new BadRequestError(message, details);
+  }
+
+  static notFound(message, details = null) {
+    return new NotFoundError(message, details);
+  }
+
+  static internal(message, details = null) {
+    return new InternalServerError(message, details);
+  }
 }
 
 export class ValidationError extends AppError {

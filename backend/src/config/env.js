@@ -59,6 +59,15 @@ export const config = {
   queue: {
     concurrency: parseInt(process.env.QUEUE_CONCURRENCY || '2', 10),
   },
+
+  // Rendering Configuration (FFmpeg / Mock)
+  rendering: {
+    defaultRenderer: process.env.DEFAULT_RENDERER || 'mock',
+    renderTimeoutMs: parseInt(process.env.RENDER_TIMEOUT_MS || '120000', 10),
+    maxScenes: parseInt(process.env.RENDER_MAX_INPUTS || '20', 10),
+    maxDurationMs: parseInt(process.env.RENDER_MAX_DURATION_MS || '300000', 10),
+    tempDir: process.env.RENDER_TEMP_DIR || null,
+  },
 };
 
 export default config;
