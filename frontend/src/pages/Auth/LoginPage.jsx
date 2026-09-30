@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Icon } from '@iconify/react';
 import Input from '../../components/ui/Input';
+import './LoginPage.css';
 
 // ─── Modern AI Brand Logo ───────────────────────────────────────────────────
 const LogoMark = () => (
@@ -23,31 +24,14 @@ const LogoMark = () => (
 // ─── Sleek Animated Mode Toggle (Sign In / Sign Up) ──────────────────────────
 const AuthModeToggle = ({ mode, setMode }) => {
   return (
-    <div style={{
-      position: 'relative',
-      display: 'flex',
-      alignItems: 'center',
-      background: '#F1F5F9',
-      padding: '4px',
-      borderRadius: '14px',
-      border: '1px solid #E2E8F0',
-      width: '100%',
-      marginBottom: '18px',
-      userSelect: 'none',
-    }}>
+    <div className="auth-mode-toggle">
       {/* Smooth Sliding Background Pill */}
-      <div style={{
-        position: 'absolute',
-        top: '4px',
-        bottom: '4px',
-        left: mode === 'signin' ? '4px' : 'calc(50% + 2px)',
-        width: 'calc(50% - 6px)',
-        background: '#FFFFFF',
-        borderRadius: '10px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04)',
-        transition: 'left 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-        zIndex: 0,
-      }} />
+      <div 
+        className="auth-mode-pill"
+        style={{
+          left: mode === 'signin' ? '4px' : 'calc(50% + 2px)',
+        }} 
+      />
 
       {/* Sign In Tab */}
       <button
@@ -108,7 +92,7 @@ const AuthModeToggle = ({ mode, setMode }) => {
 
 // ─── Sleek Gradient Divider ───────────────────────────────────────────────────
 const OrDivider = () => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: '14px', margin: '4px 0' }}>
+  <div className="auth-or-divider">
     <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, transparent, #E2E8F0)' }} />
     <span style={{ fontSize: '11px', fontWeight: '600', color: '#94A3B8', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
       or
@@ -119,34 +103,10 @@ const OrDivider = () => (
 
 // ─── Tactile Social Button with Iconify ───────────────────────────────────────
 const SocialAuthButton = ({ iconName, label, color }) => {
-  const [hovered, setHovered] = useState(false);
-
   return (
     <button
       type="button"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        width: '100%',
-        height: '42px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '10px',
-        background: hovered ? '#F8FAFC' : '#FFFFFF',
-        border: `1px solid ${hovered ? '#CBD5E1' : '#E2E8F0'}`,
-        borderRadius: '12px',
-        cursor: 'pointer',
-        fontSize: '13.5px',
-        fontWeight: '500',
-        color: '#1E293B',
-        fontFamily: 'inherit',
-        boxShadow: hovered 
-          ? '0 3px 8px rgba(0, 0, 0, 0.05)' 
-          : '0 1px 2px rgba(0, 0, 0, 0.03)',
-        transform: hovered ? 'translateY(-1px)' : 'translateY(0)',
-        transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
-      }}
+      className="auth-social-btn"
     >
       <Icon icon={iconName} width="18" height="18" style={{ color }} />
       <span>{label}</span>
@@ -157,15 +117,7 @@ const SocialAuthButton = ({ iconName, label, color }) => {
 // ─── Social Proof & Trust Strip (Conversion Multiplier) ──────────────────────
 const SocialProofTrustStrip = () => {
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '10px',
-      marginTop: '16px',
-      paddingTop: '14px',
-      borderTop: '1px dashed #E2E8F0',
-    }}>
+    <div className="auth-trust-strip">
       {/* Overlapping User Avatars */}
       <div style={{ display: 'flex', alignItems: 'center' }}>
         {[
@@ -206,14 +158,14 @@ const SocialProofTrustStrip = () => {
 
 // ─── Main Unified Auth Page ───────────────────────────────────────────────────
 const LoginPage = () => {
-  const [mode, setMode]                 = useState('signin'); // 'signin' | 'signup'
-  const [fullName, setFullName]         = useState('');
-  const [email, setEmail]               = useState('');
-  const [password, setPassword]         = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading]           = useState(false);
-  const [errors, setErrors]             = useState({});
-  const [btnHover, setBtnHover]         = useState(false);
+  const [mode, setMode]                         = useState('signin'); // 'signin' | 'signup'
+  const [fullName, setFullName]                 = useState('');
+  const [email, setEmail]                       = useState('');
+  const [password, setPassword]                 = useState('');
+  const [confirmPassword, setConfirmPassword]   = useState('');
+  const [loading, setLoading]                   = useState(false);
+  const [errors, setErrors]                     = useState({});
+  const [btnHover, setBtnHover]                 = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -233,22 +185,22 @@ const LoginPage = () => {
   const isSignUp = mode === 'signup';
 
   return (
-    <div style={pageStyle}>
+    <div className="auth-page-container">
       {/* Ambient background glow orbs */}
-      <div style={ambientGlowTopLeft} />
-      <div style={ambientGlowBottomRight} />
+      <div className="auth-ambient-top-left" />
+      <div className="auth-ambient-bottom-right" />
 
       {/* ── Unified Ultra-SaaS Card ─────────────────────────────────────────── */}
-      <div style={combinedCardStyle}>
+      <div className="auth-card">
 
         {/* ── LEFT — Form Side ──────────────────────────────────────────────── */}
-        <div style={formPanelStyle}>
+        <div className="auth-form-panel">
 
           {/* Very Top: Mode Switcher Toggle */}
           <AuthModeToggle mode={mode} setMode={setMode} />
 
           {/* Logo & Header Title */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+          <div className="auth-header-logo">
             <LogoMark />
             <span style={{
               fontFamily: 'var(--font-body)',
@@ -262,8 +214,8 @@ const LoginPage = () => {
           </div>
 
           {/* Dynamic Headline with Smooth Transition */}
-          <div style={{ minHeight: '58px', transition: 'all 0.3s ease' }}>
-            <h1 style={headingStyle}>
+          <div className="auth-headline-block">
+            <h1 className="auth-headline-title">
               {isSignUp ? (
                 <>
                   Create your{' '}
@@ -292,7 +244,7 @@ const LoginPage = () => {
                 </>
               )}
             </h1>
-            <p style={subtitleStyle}>
+            <p className="auth-headline-subtitle">
               {isSignUp 
                 ? 'Generate high-converting AI video commercials in seconds.' 
                 : 'Welcome back! Please enter your credentials to continue.'}
@@ -300,7 +252,7 @@ const LoginPage = () => {
           </div>
 
           {/* Social Auth with Iconify */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: '14px 0 12px 0' }}>
+          <div className="auth-social-group">
             <SocialAuthButton 
               iconName="logos:google-icon" 
               label={isSignUp ? 'Sign up with Google' : 'Continue with Google'} 
@@ -315,17 +267,20 @@ const LoginPage = () => {
           <OrDivider />
 
           {/* Animated Auth Form */}
-          <form onSubmit={handleSubmit} style={{ marginTop: '10px' }}>
+          <form onSubmit={handleSubmit} className="auth-form-wrapper">
             
             {/* Full Name field (Sign Up only) */}
-            <div style={{
-              maxHeight: isSignUp ? '76px' : '0px',
-              opacity: isSignUp ? 1 : 0,
-              transform: isSignUp ? 'translateY(0)' : 'translateY(-8px)',
-              overflow: 'hidden',
-              transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-              marginBottom: isSignUp ? '10px' : '0px',
-            }}>
+            <div 
+              className="auth-input-item"
+              style={{
+                maxHeight: isSignUp ? '86px' : '0px',
+                opacity: isSignUp ? 1 : 0,
+                transform: isSignUp ? 'translateY(0)' : 'translateY(-6px)',
+                overflow: 'hidden',
+                transition: 'max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, transform 0.25s ease, margin-bottom 0.25s ease',
+                marginBottom: isSignUp ? '8px' : '0px',
+              }}
+            >
               <Input
                 id="fullName"
                 label="Full Name"
@@ -339,46 +294,55 @@ const LoginPage = () => {
             </div>
 
             {/* Email Field */}
-            <Input
-              id="email"
-              label="Work Email"
-              icon="solar:letter-bold-duotone"
-              type="email"
-              placeholder="name@company.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              error={errors.email}
-              style={{ marginBottom: '10px' }}
-            />
+            <div className="auth-input-item">
+              <Input
+                id="email"
+                label="Work Email"
+                icon="solar:letter-bold-duotone"
+                type="email"
+                placeholder="name@company.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                error={errors.email}
+              />
+            </div>
 
             {/* Password header with aligned link */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-              <label htmlFor="password" style={labelStyle}>Password</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+              <label htmlFor="password" style={{ fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: '600', color: '#334155' }}>
+                Password
+              </label>
               {!isSignUp && (
-                <a href="/forgot-password" style={forgotLinkStyle}>Forgot password?</a>
+                <a href="/forgot-password" style={{ fontFamily: 'var(--font-body)', fontSize: '12.5px', color: '#4F46E5', fontWeight: '600', textDecoration: 'none', cursor: 'pointer' }}>
+                  Forgot password?
+                </a>
               )}
             </div>
 
-            <Input
-              id="password"
-              icon="solar:lock-password-bold-duotone"
-              type="password"
-              placeholder="••••••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              error={errors.password}
-              style={{ marginBottom: isSignUp ? '10px' : '16px' }}
-            />
+            <div className="auth-input-item" style={{ marginBottom: isSignUp ? '8px' : '14px' }}>
+              <Input
+                id="password"
+                icon="solar:lock-password-bold-duotone"
+                type="password"
+                placeholder="••••••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                error={errors.password}
+              />
+            </div>
 
             {/* Confirm Password (Sign Up only) */}
-            <div style={{
-              maxHeight: isSignUp ? '76px' : '0px',
-              opacity: isSignUp ? 1 : 0,
-              transform: isSignUp ? 'translateY(0)' : 'translateY(-8px)',
-              overflow: 'hidden',
-              transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-              marginBottom: isSignUp ? '16px' : '0px',
-            }}>
+            <div 
+              className="auth-input-item"
+              style={{
+                maxHeight: isSignUp ? '86px' : '0px',
+                opacity: isSignUp ? 1 : 0,
+                transform: isSignUp ? 'translateY(0)' : 'translateY(-6px)',
+                overflow: 'hidden',
+                transition: 'max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, transform 0.25s ease, margin-bottom 0.25s ease',
+                marginBottom: isSignUp ? '12px' : '0px',
+              }}
+            >
               <Input
                 id="confirmPassword"
                 label="Confirm Password"
@@ -395,32 +359,9 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={loading}
+              className="auth-cta-btn"
               onMouseEnter={() => setBtnHover(true)}
               onMouseLeave={() => setBtnHover(false)}
-              style={{
-                width: '100%',
-                height: '46px',
-                background: btnHover 
-                  ? 'linear-gradient(180deg, #6366F1 0%, #4338CA 100%)' 
-                  : 'linear-gradient(180deg, #4F46E5 0%, #3730A3 100%)',
-                color: '#FFFFFF',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontWeight: '600',
-                fontFamily: 'inherit',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.75 : 1,
-                boxShadow: btnHover 
-                  ? '0 8px 22px rgba(79, 70, 229, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.3)' 
-                  : '0 4px 14px rgba(79, 70, 229, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.22)',
-                transform: btnHover && !loading ? 'translateY(-1px)' : 'translateY(0)',
-                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-              }}
             >
               {loading ? (
                 <>
@@ -442,53 +383,21 @@ const LoginPage = () => {
         </div>
 
         {/* ── RIGHT — Artistic Canvas Panel with Floating Feature Badges ─────── */}
-        <div style={imagePanelStyle}>
+        <div className="auth-image-panel">
           {/* Base Artwork Image */}
           <img
             src="/images/creative-ecstasy.png"
             alt="Creative Ecstasy AI Poster"
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              objectPosition: 'center top',
-              display: 'block',
-            }}
+            className="auth-image"
           />
 
           {/* Vignette & Ambient Glow Overlay */}
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            pointerEvents: 'none',
-            background: 'linear-gradient(180deg, rgba(15,15,26,0.3) 0%, rgba(15,15,26,0.7) 100%)',
-          }} />
+          <div className="auth-image-overlay" />
 
           {/* 🌟 Hook Badge 1: Top Floating Engine Status Badge */}
-          <div style={{
-            position: 'absolute',
-            top: '20px',
-            right: '20px',
-            background: 'rgba(15, 23, 42, 0.75)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
-            borderRadius: '30px',
-            padding: '6px 14px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)',
-          }}>
+          <div className="auth-status-badge">
             {/* Pulsating Emerald Dot */}
-            <span style={{
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              background: '#10B981',
-              boxShadow: '0 0 10px #10B981',
-              display: 'inline-block',
-            }} />
+            <span className="auth-status-dot" />
             <span style={{
               fontSize: '12px',
               fontWeight: '600',
@@ -500,22 +409,7 @@ const LoginPage = () => {
           </div>
 
           {/* 🌟 Hook Badge 2: Bottom Floating Feature Pill */}
-          <div style={{
-            position: 'absolute',
-            bottom: '24px',
-            left: '20px',
-            right: '20px',
-            background: 'rgba(15, 23, 42, 0.8)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            borderRadius: '16px',
-            padding: '12px 16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            boxShadow: '0 12px 32px rgba(0, 0, 0, 0.4)',
-          }}>
+          <div className="auth-feature-pill">
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{
                 width: '32px',
@@ -559,114 +453,6 @@ const LoginPage = () => {
       </div>
     </div>
   );
-};
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const pageStyle = {
-  position: 'relative',
-  width: '100vw',
-  height: '100vh',
-  background: 'radial-gradient(1200px circle at 50% 10%, #F5F5FE 0%, #EDEDFC 100%)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: '24px',
-  boxSizing: 'border-box',
-  overflow: 'hidden',
-};
-
-const ambientGlowTopLeft = {
-  position: 'absolute',
-  top: '8%',
-  left: '20%',
-  width: '450px',
-  height: '450px',
-  borderRadius: '50%',
-  background: 'radial-gradient(circle, rgba(129, 140, 248, 0.22) 0%, rgba(237, 237, 252, 0) 70%)',
-  pointerEvents: 'none',
-  filter: 'blur(50px)',
-};
-
-const ambientGlowBottomRight = {
-  position: 'absolute',
-  bottom: '5%',
-  right: '22%',
-  width: '400px',
-  height: '400px',
-  borderRadius: '50%',
-  background: 'radial-gradient(circle, rgba(192, 132, 252, 0.18) 0%, rgba(237, 237, 252, 0) 70%)',
-  pointerEvents: 'none',
-  filter: 'blur(50px)',
-};
-
-const combinedCardStyle = {
-  position: 'relative',
-  zIndex: 1,
-  display: 'flex',
-  flexDirection: 'row',
-  alignItems: 'stretch',
-  width: '100%',
-  maxWidth: '960px',
-  maxHeight: '94vh',
-  background: '#FFFFFF',
-  borderRadius: '24px',
-  boxShadow: '0 25px 60px -15px rgba(50, 45, 120, 0.16), 0 0 0 1px rgba(226, 232, 240, 0.8), 0 2px 6px rgba(0, 0, 0, 0.02)',
-  overflow: 'hidden',
-};
-
-const formPanelStyle = {
-  width: '460px',
-  flexShrink: 0,
-  padding: '28px 36px',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  background: '#FFFFFF',
-  overflowY: 'auto',
-};
-
-const imagePanelStyle = {
-  flex: 1,
-  position: 'relative',
-  background: '#12131A',
-  overflow: 'hidden',
-  display: 'flex',
-};
-
-const headingStyle = {
-  fontFamily: 'var(--font-body)',
-  fontSize: '25px',
-  fontWeight: '700',
-  color: '#0F172A',
-  letterSpacing: '-0.025em',
-  lineHeight: '1.2',
-  margin: 0,
-};
-
-const subtitleStyle = {
-  fontFamily: 'var(--font-body)',
-  fontSize: '13px',
-  color: '#64748B',
-  marginTop: '4px',
-  lineHeight: '1.45',
-};
-
-const labelStyle = {
-  fontFamily: 'var(--font-body)',
-  fontSize: '13px',
-  fontWeight: '600',
-  color: '#334155',
-};
-
-const forgotLinkStyle = {
-  fontFamily: 'var(--font-body)',
-  fontSize: '12.5px',
-  color: '#4F46E5',
-  fontWeight: '600',
-  textDecoration: 'none',
-  cursor: 'pointer',
-  transition: 'color 0.15s',
 };
 
 export default LoginPage;

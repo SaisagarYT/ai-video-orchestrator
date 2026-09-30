@@ -25,6 +25,7 @@ const Input = ({
   disabled = false,
   id,
   icon,
+  className = '',
   style = {},
 }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -91,10 +92,10 @@ const Input = ({
   };
 
   return (
-    <div style={{ width: '100%', ...style }}>
+    <div className={`input-field-group ${className}`} style={{ width: '100%', ...style }}>
       {/* Label */}
       {label && (
-        <label htmlFor={id} style={labelStyle}>
+        <label htmlFor={id} className="input-field-label" style={labelStyle}>
           {label}
         </label>
       )}
@@ -119,6 +120,7 @@ const Input = ({
 
         <input
           id={id}
+          className="input-field-input"
           type={inputType}
           value={value}
           onChange={onChange}
