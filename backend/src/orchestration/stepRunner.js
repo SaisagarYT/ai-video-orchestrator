@@ -11,6 +11,7 @@ import { renderService } from '../services/rendering/index.js';
 import { subtitleService } from '../services/subtitles/index.js';
 import { evaluationService } from '../services/evaluation/index.js';
 import { revisionService } from '../services/revision/index.js';
+import { videoUnderstandingService } from '../video-understanding/index.js';
 
 const defaultStepHandlers = {
   CONTEXT_INGESTION: async (step, context) => {
@@ -388,6 +389,51 @@ const defaultStepHandlers = {
     };
   },
 
+  VIDEO_UNDERSTANDING: async (step, context) => {
+    const campaign = context.campaign || {};
+    const executionId = step.execution_id;
+
+    let finalVideoId = context.finalVideoPersistence?.finalVideoId;
+    if (!finalVideoId) {
+      const { data: videos } = await supabase
+        .from('final_videos')
+        .select('id')
+        .eq('campaign_id', campaign.id)
+        .eq('workflow_execution_id', executionId)
+        .order('created_at', { ascending: false });
+      finalVideoId = videos?.[0]?.id || null;
+    }
+
+    const { run, scenes, reused } = await videoUnderstandingService.analyzeVideo({
+      campaignId: campaign.id,
+      executionId,
+      stepId: step.id,
+      finalVideoId,
+      options: {
+        creativeBible: context.screenwriter?.creativeBible,
+        scenes: context.screenwriter?.scenes,
+        brandContext: context.contextIngestion,
+      },
+    });
+
+    return {
+      runId: run.id,
+      campaignId: campaign.id,
+      workflowExecutionId: executionId,
+      finalVideoId,
+      status: run.status,
+      frameCount: run.frame_count,
+      sceneCount: run.scene_count,
+      overallConfidence: run.overall_confidence,
+      summary: run.summary,
+      dimensions: run.dimensions,
+      detectedIssues: run.detected_issues || [],
+      scenes: scenes || [],
+      reused: Boolean(reused),
+      completedAt: run.completed_at || run.created_at,
+    };
+  },
+
   QUALITY_EVALUATION: async (step, context) => {
     const campaign = context.campaign || {};
     const executionId = step.execution_id;
@@ -413,6 +459,7 @@ const defaultStepHandlers = {
       options: {
         creativeBible: context.screenwriter?.creativeBible,
         scenes: context.screenwriter?.scenes,
+        visionAnalysis: context.videoUnderstanding || null,
       },
     });
 

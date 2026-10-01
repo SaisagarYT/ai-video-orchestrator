@@ -46,6 +46,10 @@ export class ProviderRegistry {
     return this;
   }
 
+  getDefault(type) {
+    return this.defaults.get(type) || null;
+  }
+
   get(type, name) {
     const typeMap = this.providers.get(type);
     if (!typeMap) {

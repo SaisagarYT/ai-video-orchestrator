@@ -16,7 +16,7 @@ import { MockStorageProvider } from './storage/mock-storage.provider.js';
 import { CloudinaryStorageProvider } from './storage/cloudinary.provider.js';
 
 import { MockImageProvider } from './image/mock-image.provider.js';
-import { MockVisionProvider } from './vision/mock-vision.provider.js';
+import { MockVisionProvider, mockVisionProvider } from './vision/mock-vision.provider.js';
 
 // Instantiate Providers
 const mockLLM = new MockLLMProvider();
@@ -51,7 +51,6 @@ const cloudinaryStorage = new CloudinaryStorageProvider({
 });
 
 const mockImage = new MockImageProvider();
-const mockVision = new MockVisionProvider();
 
 // Register into registry
 providerRegistry.register(PROVIDER_TYPES.LLM, 'mock', mockLLM, { isDefault: true });
@@ -67,7 +66,7 @@ providerRegistry.register(PROVIDER_TYPES.STORAGE, 'mock', mockStorage, { isDefau
 providerRegistry.register(PROVIDER_TYPES.STORAGE, 'cloudinary', cloudinaryStorage);
 
 providerRegistry.register(PROVIDER_TYPES.IMAGE, 'mock', mockImage, { isDefault: true });
-providerRegistry.register(PROVIDER_TYPES.VISION, 'mock', mockVision, { isDefault: true });
+providerRegistry.register(PROVIDER_TYPES.VISION, 'mock', mockVisionProvider, { isDefault: true });
 
 // Configure defaults based on environment
 if (config.ai.llmProvider === 'openrouter' && config.ai.openrouterApiKey) {

@@ -8,6 +8,7 @@ import { revisionPolicy } from './revision.policy.js';
 import { sceneGenerationService } from '../media/scene-generation.service.js';
 import { renderService } from '../rendering/index.js';
 import { evaluationService } from '../evaluation/index.js';
+import { videoUnderstandingService } from '../../video-understanding/index.js';
 import { MAX_REVISION_ATTEMPTS, REVISION_STATUS } from './revision.types.js';
 import { RevisionError } from './revision.errors.js';
 
@@ -20,6 +21,7 @@ export class RevisionService {
     this.sceneGen = options.sceneGen || sceneGenerationService;
     this.render = options.render || renderService;
     this.evaluator = options.evaluator || evaluationService;
+    this.videoUnderstanding = options.videoUnderstanding || videoUnderstandingService;
     this.maxAttempts = options.maxAttempts || MAX_REVISION_ATTEMPTS;
   }
 
@@ -382,6 +384,27 @@ export class RevisionService {
       storageAsset: renderOutput.storageAsset,
     });
 
+    // 9b. Multimodal Video Understanding on Revised Video (Slice 8)
+    let visionAnalysis = null;
+    if (this.videoUnderstanding) {
+      try {
+        const visionResult = await this.videoUnderstanding.analyzeVideo({
+          campaignId,
+          executionId,
+          finalVideoId: finalVideo.id,
+          options: {
+            creativeBible,
+            scenes,
+            brandContext: context.contextIngestion || context.campaign,
+            forceRefresh: true,
+          },
+        });
+        visionAnalysis = visionResult?.run || null;
+      } catch (err) {
+        logger.warn(`[RevisionService] Multimodal video understanding error during revision: ${err.message}`);
+      }
+    }
+
     // 10. Re-evaluation
     const { evaluation: newEvalRecord, evaluationResult: newEvalResult } =
       await this.evaluator.evaluateFinalVideo({
@@ -393,6 +416,7 @@ export class RevisionService {
           forceRefresh: true,
           creativeBible,
           scenes,
+          visionAnalysis,
         },
       });
 

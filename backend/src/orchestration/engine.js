@@ -53,6 +53,17 @@ export const REVISION_WORKFLOW_STAGES = [
   'AUTONOMOUS_REVISION',
 ];
 
+export const MULTIMODAL_EVALUATION_WORKFLOW_STAGES = [
+  ...RENDER_WORKFLOW_STAGES,
+  'VIDEO_UNDERSTANDING',
+  'QUALITY_EVALUATION',
+];
+
+export const MULTIMODAL_REVISION_WORKFLOW_STAGES = [
+  ...MULTIMODAL_EVALUATION_WORKFLOW_STAGES,
+  'AUTONOMOUS_REVISION',
+];
+
 const STAGE_CONTEXT_KEYS = {
   CONTEXT_INGESTION: 'contextIngestion',
   DIRECTOR: 'director',
@@ -66,6 +77,7 @@ const STAGE_CONTEXT_KEYS = {
   TIMELINE_BUILD: 'timelineBuild',
   VIDEO_RENDER: 'videoRender',
   FINAL_VIDEO_PERSISTENCE: 'finalVideoPersistence',
+  VIDEO_UNDERSTANDING: 'videoUnderstanding',
   QUALITY_EVALUATION: 'qualityEvaluation',
   AUTONOMOUS_REVISION: 'autonomousRevision',
 };
@@ -82,6 +94,8 @@ export const createWorkflowExecution = async ({
   includeRender = false,
   includeEvaluation = false,
   includeRevision = false,
+  includeVision = false,
+  includeMultimodal = false,
 }) => {
   // 1. Verify campaign ownership
   const { data: campaign, error: campaignError } = await supabase
@@ -130,14 +144,16 @@ export const createWorkflowExecution = async ({
   const activeStages =
     stages ||
     (includeRevision
-      ? REVISION_WORKFLOW_STAGES
-      : includeEvaluation
-        ? EVALUATION_WORKFLOW_STAGES
-        : includeRender
-          ? RENDER_WORKFLOW_STAGES
-          : includeMedia
-            ? FULL_WORKFLOW_STAGES
-            : WORKFLOW_STAGES);
+      ? (includeVision || includeMultimodal ? MULTIMODAL_REVISION_WORKFLOW_STAGES : REVISION_WORKFLOW_STAGES)
+      : includeMultimodal || includeVision
+        ? MULTIMODAL_EVALUATION_WORKFLOW_STAGES
+        : includeEvaluation
+          ? EVALUATION_WORKFLOW_STAGES
+          : includeRender
+            ? RENDER_WORKFLOW_STAGES
+            : includeMedia
+              ? FULL_WORKFLOW_STAGES
+              : WORKFLOW_STAGES);
   const steps = activeStages.map((stageName, index) => ({
     id: crypto.randomUUID(),
     execution_id: executionId,

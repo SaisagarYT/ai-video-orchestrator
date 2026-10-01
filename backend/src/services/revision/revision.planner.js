@@ -190,12 +190,22 @@ export class RevisionPlanner {
       for (const issue of sceneIssues) {
         const cat = issue.category || 'visual';
         const desc = (issue.description || '').toLowerCase();
+        const code = issue.code || '';
+        const evidence = (issue.evidence || '').toLowerCase();
 
-        if (cat === 'product' || desc.includes('product') || desc.includes('logo')) {
+        if (
+          code === 'PRODUCT_FIDELITY_MISMATCH' ||
+          cat === 'product' ||
+          desc.includes('product') ||
+          desc.includes('logo') ||
+          evidence.includes('upright') ||
+          evidence.includes('horizontal') ||
+          evidence.includes('geometry')
+        ) {
           addOp(
             REPAIR_OPERATIONS.ADD_CONSTRAINT,
-            `Ensure ${campaign.product_name || 'product'} is centered, pristine, and prominently featured in clear focus.`,
-            'Fix product fidelity and logo prominence'
+            `Preserve original product geometry and proportions. Ensure ${campaign.product_name || 'product'} container remains upright, centered, pristine, and prominently featured in clear focus.`,
+            'Fix product fidelity, upright container orientation, and geometry'
           );
           addOp(
             REPAIR_OPERATIONS.ENHANCE_BRANDING,

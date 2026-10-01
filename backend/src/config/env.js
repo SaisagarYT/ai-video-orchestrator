@@ -97,6 +97,16 @@ export const config = {
     codec: process.env.AUDIO_CODEC || 'aac',
     bitrate: process.env.AUDIO_BITRATE || '192k',
   },
+
+  // Multimodal Video Understanding Configuration (Slice 8)
+  videoUnderstanding: {
+    provider: process.env.VISION_PROVIDER || 'mock',
+    framesPerScene: parseInt(process.env.FRAMES_PER_SCENE || '5', 10),
+    maxFramesPerScene: parseInt(process.env.MAX_FRAMES_PER_SCENE || '10', 10),
+    maxTotalFrames: parseInt(process.env.MAX_TOTAL_FRAMES || '30', 10),
+    visionTimeoutMs: parseInt(process.env.VISION_TIMEOUT_MS || '60000', 10),
+    tempDir: process.env.VISION_TEMP_DIR || null,
+  },
 };
 
 export default config;

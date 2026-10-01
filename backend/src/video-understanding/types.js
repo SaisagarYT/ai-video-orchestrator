@@ -1,0 +1,56 @@
+/**
+ * Video Understanding & Multimodal Validation Domain Types & Constants
+ */
+
+export const VISION_DIMENSIONS = {
+  PRODUCT_FIDELITY: 'productFidelity',
+  BRAND_CONSISTENCY: 'brandConsistency',
+  VISUAL_QUALITY: 'visualQuality',
+  SCENE_CONSISTENCY: 'sceneConsistency',
+};
+
+export const VISION_STATUS = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+};
+
+export const VISION_ISSUE_CODES = {
+  PRODUCT_FIDELITY_MISMATCH: 'PRODUCT_FIDELITY_MISMATCH',
+  BRAND_INCONSISTENCY: 'BRAND_INCONSISTENCY',
+  LIGHTING_MISMATCH: 'LIGHTING_MISMATCH',
+  SCENE_INCONSISTENCY: 'SCENE_INCONSISTENCY',
+  VISUAL_ARTIFACT: 'VISUAL_ARTIFACT',
+  COMPOSITION_DEFECT: 'COMPOSITION_DEFECT',
+};
+
+export const VISION_SEVERITY = {
+  INFO: 'info',
+  WARNING: 'warning',
+  MAJOR: 'major',
+  CRITICAL: 'critical',
+};
+
+export const DEFAULT_FRAMES_PER_SCENE = 5;
+export const MAX_FRAMES_PER_SCENE = 10;
+export const MAX_TOTAL_FRAMES = 30;
+export const DEFAULT_VISION_TIMEOUT_MS = 60000;
+
+export const DEFAULT_VISION_WEIGHTS = {
+  productFidelity: 0.40,
+  brandConsistency: 0.30,
+  visualQuality: 0.30,
+};
+
+export default {
+  VISION_DIMENSIONS,
+  VISION_STATUS,
+  VISION_ISSUE_CODES,
+  VISION_SEVERITY,
+  DEFAULT_FRAMES_PER_SCENE,
+  MAX_FRAMES_PER_SCENE,
+  MAX_TOTAL_FRAMES,
+  DEFAULT_VISION_TIMEOUT_MS,
+  DEFAULT_VISION_WEIGHTS,
+};

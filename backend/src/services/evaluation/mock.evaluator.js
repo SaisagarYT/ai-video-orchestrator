@@ -43,6 +43,63 @@ export class MockEvaluator {
       visualScore = target;
     }
 
+    const rawIssues = options.issues ?? this.options.issues;
+    const issues = rawIssues ? [...rawIssues] : [];
+    const rawRecs = options.recommendations ?? this.options.recommendations;
+    const recommendations = rawRecs ? [...rawRecs] : [];
+    const rawInstr = options.revisionInstructions ?? this.options.revisionInstructions;
+    const revisionInstructions = rawInstr ? [...rawInstr] : [];
+
+    // Multimodal Vision Analysis Integration (Slice 8)
+    const visionAnalysis = options.visionAnalysis || null;
+    let hasMajorVisionIssue = false;
+
+    if (visionAnalysis && visionAnalysis.dimensions && overrideScore === undefined) {
+      const vDims = visionAnalysis.dimensions;
+      if (typeof vDims.productFidelity?.score === 'number') {
+        productScore = Math.round((productScore * 0.6 + vDims.productFidelity.score * 0.4) * 100) / 100;
+      }
+      if (typeof vDims.brandConsistency?.score === 'number') {
+        brandScore = Math.round((brandScore * 0.6 + vDims.brandConsistency.score * 0.4) * 100) / 100;
+      }
+      if (typeof vDims.visualQuality?.score === 'number') {
+        visualScore = Math.round((visualScore * 0.6 + vDims.visualQuality.score * 0.4) * 100) / 100;
+      }
+
+      const visionIssues = visionAnalysis.detected_issues || visionAnalysis.detectedIssues || [];
+      for (const vi of visionIssues) {
+        issues.push({
+          severity: vi.severity || 'major',
+          category: vi.category || 'visual',
+          description: `[Vision Finding] ${vi.code || 'VISUAL_DEFECT'}: ${vi.evidence || 'Visual defect detected'}`,
+          sceneId: vi.sceneId,
+          evidence: vi.evidence,
+        });
+
+        if (Array.isArray(vi.revisionInstructions)) {
+          for (const instr of vi.revisionInstructions) {
+            if (!revisionInstructions.includes(instr)) {
+              revisionInstructions.push(instr);
+            }
+          }
+        }
+
+        if (vi.severity === 'critical' || vi.severity === 'major') {
+          hasMajorVisionIssue = true;
+        }
+      }
+    }
+
+    if (forceFail || hasMajorVisionIssue) {
+      const currentRaw = productScore * weights.productFidelity + brandScore * weights.brandConsistency + visualScore * weights.visualQuality;
+      if (currentRaw >= threshold) {
+        const target = Math.max(1, threshold - 1.5);
+        productScore = Math.min(productScore, target);
+        brandScore = Math.min(brandScore, target);
+        visualScore = Math.min(visualScore, target);
+      }
+    }
+
     const weightedProduct = Math.round(productScore * weights.productFidelity * 100) / 100;
     const weightedBrand = Math.round(brandScore * weights.brandConsistency * 100) / 100;
     const weightedVisual = Math.round(visualScore * weights.visualQuality * 100) / 100;
@@ -50,7 +107,7 @@ export class MockEvaluator {
     const rawOverall = productScore * weights.productFidelity + brandScore * weights.brandConsistency + visualScore * weights.visualQuality;
     const overallScore = Math.round(rawOverall * 100) / 100;
 
-    const passed = !forceFail && overallScore >= threshold;
+    const passed = overallScore >= threshold;
 
     const technicalChecks = {
       videoReadable: options.videoReadable ?? true,
@@ -60,13 +117,6 @@ export class MockEvaluator {
       audioPresent: options.audioPresent ?? true,
       subtitlesValid: options.subtitlesValid ?? true,
     };
-
-    const rawIssues = options.issues ?? this.options.issues;
-    const issues = rawIssues ? [...rawIssues] : [];
-    const rawRecs = options.recommendations ?? this.options.recommendations;
-    const recommendations = rawRecs ? [...rawRecs] : [];
-    const rawInstr = options.revisionInstructions ?? this.options.revisionInstructions;
-    const revisionInstructions = rawInstr ? [...rawInstr] : [];
 
     if (forceFail || !passed) {
       if (issues.length === 0) {

@@ -25,6 +25,8 @@ class MemoryDatabaseStore {
       quality_evaluations: new Map(),
       revision_attempts: new Map(),
       revision_targets: new Map(),
+      video_understanding_runs: new Map(),
+      video_understanding_scenes: new Map(),
     };
   }
 

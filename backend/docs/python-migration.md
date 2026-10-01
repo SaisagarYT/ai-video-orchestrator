@@ -28,18 +28,20 @@ In accordance with architectural directives:
 | **Queue & Worker Daemon** | `app/workers/` (`job_worker.py`, `render_worker.py`, `worker_daemon.py`), Redis | `src/orchestration/queue.js`, `src/orchestration/engine.js` | **Migrated & Verified** | `MemoryQueueAdapter` enforces concurrency and events; Supabase PostgreSQL stores durable steps; crash recovery implemented. |
 | **Timeline Construction & IR** | `app/services/timeline_builder.py` | `src/services/timeline/` (`timeline.schema.js`, `timeline.builder.js`, `timeline.validator.js`, `timeline.types.js`) | **Migrated & Verified (Slice 5)** | Canonical Timeline IR v1.0, deterministic scene ordering, asset matching, audio alignment, Zod validation. |
 | **Video Rendering & FFmpeg** | `app/workers/render_worker.py`, FFmpeg scripts | `src/services/rendering/` (`renderer.registry.js`, `mock-renderer.js`, `ffmpeg-renderer.js`, `render.service.js`) | **Migrated & Verified (Slice 5)** | Pluggable renderer abstraction, MockRenderer for offline runs, secure argument-array FFmpegRenderer, Cloudinary persistence, durable `render_jobs` and `final_videos` with full provenance. |
-| **Quality Evaluation & QA Gate** | `app/orchestration/evaluation_engine.py`, `app/services/evaluation_service.py` | `src/services/evaluation/` (`evaluation.rules.js`, `evaluation.schema.js`, `evaluation.service.js`, `mock.evaluator.js`) | **Migrated & Verified (Slice 6)** | Product Fidelity (40%), Brand Consistency (30%), Visual Quality (30%) dimensions, deterministic score verification, thresholding, technical checks, and structured revision instructions. Autonomous revision loop is deferred to Slice 7. |
+| **Quality Evaluation & QA Gate** | `app/orchestration/evaluation_engine.py`, `app/services/evaluation_service.py` | `src/services/evaluation/` (`evaluation.rules.js`, `evaluation.schema.js`, `evaluation.service.js`, `mock.evaluator.js`) | **Migrated & Verified (Slice 6)** | Product Fidelity (40%), Brand Consistency (30%), Visual Quality (30%) dimensions, deterministic score verification, thresholding, technical checks, and structured revision instructions. |
+| **Autonomous Revision & Prompt Self-Healing** | `app/orchestration/revision_engine.py` | `src/services/revision/` (`revision.planner.js`, `prompt.repair.js`, `revision.policy.js`, `revision.service.js`) | **Migrated & Verified (Slice 7)** | Bounded revision loop (MAX_REVISION_ATTEMPTS = 2), selective scene regeneration, prompt self-healing, versioned timeline IR (v2.0), crash recovery. |
+| **Multimodal Video Understanding & Vision Inspection** | Vision inspection concepts | `src/video-understanding/` (`frameSampler.js`, `frameExtractor.js`, `sceneAnalyzer.js`, `visionAnalyzer.js`, `videoUnderstandingService.js`) | **Implemented & Verified (Slice 8)** | Representative frame extraction, normalized vision provider abstraction, scene-level visual inspection, product/brand/lighting fidelity, multimodal score integration, Slice 7 revision feed. |
 | **Automated Subtitle Generation** | Scene narration scripts | `src/services/subtitles/` (`subtitle.schema.js`, `subtitle.formatter.js`, `subtitle.service.js`) | **Migrated & Verified (Slice 6)** | Canonical Subtitle Document IR, scene-level timing fallback, SRT and WebVTT formatting, storage persistence, and shell injection protection. |
 | **Audio Mastering & Normalization** | FFmpeg scripts | `src/services/audio/` (`audio.config.js`, `audio.mastering.service.js`) | **Migrated & Verified (Slice 6)** | EBU R128 loudness normalization (`-16.0 LUFS`, `-1.5 dBTP`), 48kHz stereo normalization, synchronization validation, and durable events. |
-| **Data Persistence** | `app/models/` (SQLAlchemy / SQLite) | `src/config/supabase.js`, `supabase/migrations/` | **Migrated & Verified** | Full Supabase schema (`campaigns`, `workflow_executions`, `workflow_steps`, `workflow_events`, `users`, `provider_jobs`, `assets`, `timelines`, `render_jobs`, `final_videos`, `quality_evaluations`). |
-| **API Transport & Routing** | `app/api/` (FastAPI) | `src/routes/`, `src/controllers/`, `src/app.js` | **Migrated & Verified** | Clean Express routes for Campaigns, Health, Auth, SSE progress streaming, Generation dispatch, and Evaluation retrieval. |
+| **Data Persistence** | `app/models/` (SQLAlchemy / SQLite) | `src/config/supabase.js`, `supabase/migrations/` | **Migrated & Verified** | Full Supabase schema including `video_understanding_runs` and `video_understanding_scenes`. |
+| **API Transport & Routing** | `app/api/` (FastAPI) | `src/routes/`, `src/controllers/`, `src/app.js` | **Migrated & Verified** | Clean Express routes for Campaigns, Health, Auth, SSE progress streaming, Generation dispatch, Evaluation, Revisions, and Video Understanding. |
 
 ---
 
 ## 3. Test Coverage & Verification
 
 All automated tests run via `node --test`:
-- **138 total tests across 31 suites**
+- **192 total tests across 54 suites**
 - **100% pass rate**
 - **0 external credentials required**
 
@@ -81,6 +83,14 @@ All automated tests run via `node --test`:
 35. `tests/unit/prompt.repair.test.js`: Deterministic prompt self-healing, conflict stripping, lighting upgrade, brand alignment.
 36. `tests/integration/workflow.revision.test.js`: End-to-end autonomous revision loops, selective scene regeneration, timeline v2 rebuild, bounded exhaustion termination, crash recovery.
 37. `tests/integration/revision.api.test.js`: Campaign revision history retrieval, tenant security, provenance tracking.
+38. `tests/unit/frameSampler.test.js`: Deterministic equidistant timestamp sampling, bounds clamping, multi-scene timeline offset planning.
+39. `tests/unit/frameExtractor.test.js`: Isolated temp directory management, FFmpeg frame extraction, synthetic fallback, and clean directory teardown.
+40. `tests/unit/mock-vision.provider.test.js`: Deterministic scenario simulation (PERFECT, PRODUCT_FIDELITY_FAILURE, LIGHTING_MISMATCH, BRAND_INCONSISTENCY, SCENE_INCONSISTENCY), error normalization.
+41. `tests/unit/visionAnalyzer.test.js`: Multi-scene frame grouping, dimensional score aggregation, cross-scene issue synthesis.
+42. `tests/integration/video-understanding.service.test.js`: End-to-end video understanding pipeline, durable runs and scenes in Supabase, idempotency caching.
+43. `tests/integration/multimodal.evaluation.test.js`: Unified 60% rule / 40% vision score blending, issue injection, and multimodal validation flag.
+44. `tests/integration/vision.revision.test.js`: Full closed-loop vision failure diagnosis, prompt repair, selective regeneration, timeline rebuild, and re-evaluation pass.
+45. `tests/integration/video-understanding.api.test.js`: Authenticated API endpoint GET /api/campaigns/:id/video-understanding, multi-tenant isolation, sanitized payload.
 
 ---
 
@@ -93,7 +103,7 @@ The following components remain in the legacy Python codebase and have **NOT** b
 
 ---
 
-## 5. Next Steps (Slice 8)
+## 5. Next Steps
 
 - Social media publishing integrations and external ad network deployment.
 - Webhook dispatch and delivery tracking for platform publishing.
