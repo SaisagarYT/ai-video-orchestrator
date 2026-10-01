@@ -8,7 +8,7 @@ export class ConceptService {
     this.providerName = options.providerName;
   }
 
-  async generateConcepts({ strategy, campaign, business = {} }) {
+  async generateConcepts({ strategy, campaign, business = {}, memoryContext = null }) {
     const llm = providerRegistry.getLLM(this.providerName);
     const userPrompt = buildConceptUserPrompt({ strategy, campaign, business });
 
@@ -34,7 +34,7 @@ export class ConceptService {
         error: err.message,
       });
 
-      const fallback = this._synthesizeDeterministicConcepts({ strategy, campaign });
+      const fallback = this._synthesizeDeterministicConcepts({ strategy, campaign, memoryContext });
       const validated = conceptListSchema.parse({ concepts: fallback });
 
       return {
@@ -46,7 +46,7 @@ export class ConceptService {
     }
   }
 
-  _synthesizeDeterministicConcepts({ strategy, campaign }) {
+  _synthesizeDeterministicConcepts({ strategy, campaign, memoryContext = null }) {
     const product = campaign.product_name || 'Featured Product';
     const cta = strategy.call_to_action || campaign.call_to_action || 'Order Now';
     const tone = strategy.tone || 'Dynamic & Engaging';

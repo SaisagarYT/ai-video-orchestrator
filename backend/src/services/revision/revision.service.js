@@ -11,6 +11,7 @@ import { evaluationService } from '../evaluation/index.js';
 import { videoUnderstandingService } from '../../video-understanding/index.js';
 import { MAX_REVISION_ATTEMPTS, REVISION_STATUS } from './revision.types.js';
 import { RevisionError } from './revision.errors.js';
+import { memoryLearningService } from '../../memory/index.js';
 
 export class RevisionService {
   constructor(options = {}) {
@@ -225,6 +226,11 @@ export class RevisionService {
           creativeBible,
           promptSpec: compiledPromptSpec,
         });
+
+      target.appliedOperations = (appliedOperations || []).map((op) =>
+        typeof op === 'string' ? op : op.type || op.rule
+      );
+      target.explanation = explanation;
 
       await recordWorkflowEvent({
         executionId,
@@ -580,6 +586,25 @@ export class RevisionService {
     // Determine final loop status
     if (loopPassed) {
       logger.info(`[RevisionService] Revision loop succeeded for execution ${executionId}`);
+
+      try {
+        let bId = context.campaign?.business_id;
+        if (!bId) {
+          const { data: campRow } = await supabase.from('campaigns').select('business_id').eq('id', campaignId).single();
+          bId = campRow?.business_id;
+        }
+        if (bId) {
+          const allTargets = attempts.flatMap((att) => att.plan?.targets || []);
+          await memoryLearningService.proposeRevisionCandidates({
+            businessId: bId,
+            campaignId,
+            executionId,
+            targets: allTargets,
+          });
+        }
+      } catch (memErr) {
+        logger.warn(`[RevisionService] Failed proposing revision memory candidates: ${memErr.message}`);
+      }
       return {
         status: REVISION_STATUS.COMPLETED,
         passed: true,

@@ -11,6 +11,7 @@ import authRoutes from './routes/auth.routes.js';
 import campaignRoutes from './routes/campaign.routes.js';
 import sceneRoutes from './routes/scene.routes.js';
 import videoRoutes from './routes/video.routes.js';
+import businessRoutes from './routes/business.routes.js';
 
 const app = express();
 
@@ -61,6 +62,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api/scenes', sceneRoutes);
 app.use('/api/videos', videoRoutes);
+app.use('/api/businesses', businessRoutes);
 
 // Root informational endpoint
 app.get('/', (req, res) => {

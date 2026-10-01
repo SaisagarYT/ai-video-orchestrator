@@ -27,6 +27,9 @@ class MemoryDatabaseStore {
       revision_targets: new Map(),
       video_understanding_runs: new Map(),
       video_understanding_scenes: new Map(),
+      brand_memory_items: new Map(),
+      creative_memory_items: new Map(),
+      memory_evidence: new Map(),
     };
   }
 
@@ -196,7 +199,12 @@ class MemoryQueryBuilder {
             }
           }
 
-          if (this.tableName === 'render_jobs' && row.idempotency_key) {
+          if (
+            (this.tableName === 'render_jobs' ||
+              this.tableName === 'brand_memory_items' ||
+              this.tableName === 'creative_memory_items') &&
+            row.idempotency_key
+          ) {
             for (const existing of table.values()) {
               if (existing.idempotency_key === row.idempotency_key && existing.id !== row.id) {
                 const res = {

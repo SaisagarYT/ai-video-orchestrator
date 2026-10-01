@@ -5,6 +5,7 @@ export const assemblePositivePrompt = ({
   visualStyle,
   lightingDirectives,
   colorPalette,
+  brandConstraints = null,
 }) => {
   return [
     visualPrompt?.replace(/\.+$/, ''),
@@ -12,6 +13,7 @@ export const assemblePositivePrompt = ({
     `Visual Style: ${visualStyle}`,
     `Lighting & Atmosphere: ${lightingDirectives}`,
     `Color Grading: ${colorPalette}`,
+    brandConstraints ? `Brand Invariants: ${brandConstraints}` : null,
     'Master commercial broadcast standard, photorealistic 8k render, crystal-clear focus.',
   ]
     .filter(Boolean)

@@ -8,6 +8,7 @@ import { frameExtractor } from './frameExtractor.js';
 import { visionAnalyzer } from './visionAnalyzer.js';
 import { VideoUnderstandingError } from './errors.js';
 import { validateVideoUnderstandingResult } from './schemas.js';
+import { memoryLearningService } from '../memory/index.js';
 
 export class VideoUnderstandingService {
   constructor(options = {}) {

@@ -12,6 +12,8 @@ import { subtitleService } from '../services/subtitles/index.js';
 import { evaluationService } from '../services/evaluation/index.js';
 import { revisionService } from '../services/revision/index.js';
 import { videoUnderstandingService } from '../video-understanding/index.js';
+import { memoryRetrievalService } from '../memory/index.js';
+import { recordWorkflowEvent, WORKFLOW_EVENT_TYPES } from './events.js';
 
 const defaultStepHandlers = {
   CONTEXT_INGESTION: async (step, context) => {
@@ -30,6 +32,20 @@ const defaultStepHandlers = {
     };
   },
 
+  MEMORY_RETRIEVAL: async (step, context) => {
+    const campaign = context.campaign || {};
+    const businessId = campaign.business_id;
+    const executionId = step.execution_id;
+
+    const memorySnapshot = await memoryRetrievalService.retrieveMemoryContext({
+      businessId,
+      campaign,
+      executionId,
+    });
+
+    return memorySnapshot;
+  },
+
   DIRECTOR: async (step, context) => {
     const campaign = context.campaign || {};
     const strategy = context.contextIngestion?.strategy || {
@@ -43,7 +59,13 @@ const defaultStepHandlers = {
       recommended_format: '9:16 vertical video',
     };
 
-    const conceptResult = await conceptService.generateConcepts({ strategy, campaign });
+    const memoryContext = context.memory || context.memoryRetrieval || null;
+    const conceptResult = await conceptService.generateConcepts({
+      strategy,
+      campaign,
+      business: context.business || {},
+      memoryContext,
+    });
     const selectedConcept = conceptResult.concepts[0] || {
       title: `High Impact Concept for ${campaign.product_name || 'Campaign'}`,
       concept: `Compelling narrative highlighting ${campaign.product_name || 'Product'}`,
@@ -84,10 +106,13 @@ const defaultStepHandlers = {
       call_to_action: campaign.call_to_action || 'Order now',
     };
 
+    const memoryContext = context.memory || context.memoryRetrieval || null;
     const storyboardResult = await creativeDirectionService.generateStoryboardPlan({
       concept,
       strategy,
       campaign,
+      business: context.business || {},
+      memoryContext,
       aspectRatio: campaign.aspect_ratio || '9:16',
     });
 
@@ -141,6 +166,7 @@ const defaultStepHandlers = {
     const scenes = context.screenwriter?.scenes || [];
     const creativeBible = context.screenwriter?.creativeBible;
     const aspectRatio = context.campaign?.aspect_ratio || '9:16';
+    const memoryContext = context.memory || context.memoryRetrieval || null;
 
     const prompts = scenes.map((s, idx) => {
       const spec = promptCompilerService.compileSceneSpecification({
@@ -154,6 +180,7 @@ const defaultStepHandlers = {
           duration_seconds: s.duration || 5,
         },
         creativeBible,
+        memoryContext,
         aspectRatio,
         targetProvider: 'mock-video',
       });

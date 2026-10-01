@@ -8,7 +8,14 @@ export class CreativeDirectionService {
     this.providerName = options.providerName;
   }
 
-  async generateStoryboardPlan({ concept, strategy, campaign, business = {}, aspectRatio = '9:16' }) {
+  async generateStoryboardPlan({
+    concept,
+    strategy,
+    campaign,
+    business = {},
+    memoryContext = null,
+    aspectRatio = '9:16',
+  }) {
     const llm = providerRegistry.getLLM(this.providerName);
     const userPrompt = buildStoryboardUserPrompt({ concept, strategy, campaign, business });
 
@@ -23,8 +30,28 @@ export class CreativeDirectionService {
         storyboardPlanSchema
       );
 
+      const creativeBible = { ...response.parsed.creative_bible };
+      if (memoryContext) {
+        const brandColors = memoryContext.identity?.brandColors || business?.brand_colors;
+        if (brandColors && !creativeBible.color_palette?.includes(brandColors)) {
+          creativeBible.color_palette = `Brand Colors: ${brandColors}. ${creativeBible.color_palette || ''}`.trim();
+        }
+        const negativeConstraints = memoryContext.negativeConstraints || [];
+        if (negativeConstraints.length > 0) {
+          const extraNegatives = negativeConstraints
+            .map((nc) => (typeof nc.value === 'string' ? nc.value : JSON.stringify(nc.value)))
+            .join(', ');
+          if (!creativeBible.negative_prompts?.includes(extraNegatives)) {
+            creativeBible.negative_prompts = `${creativeBible.negative_prompts || ''}, ${extraNegatives}`.trim();
+          }
+        }
+        if (memoryContext.identity?.visualStyle && !creativeBible.visual_style?.includes(memoryContext.identity.visualStyle)) {
+          creativeBible.visual_style = `${memoryContext.identity.visualStyle}. ${creativeBible.visual_style || ''}`.trim();
+        }
+      }
+
       return {
-        creativeBible: response.parsed.creative_bible,
+        creativeBible,
         scenes: response.parsed.scenes,
         usage: response.usage,
         latencyMs: response.latencyMs,

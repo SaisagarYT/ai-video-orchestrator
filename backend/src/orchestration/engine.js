@@ -64,8 +64,19 @@ export const MULTIMODAL_REVISION_WORKFLOW_STAGES = [
   'AUTONOMOUS_REVISION',
 ];
 
+export const MEMORY_WORKFLOW_STAGES = [
+  'CONTEXT_INGESTION',
+  'MEMORY_RETRIEVAL',
+  'DIRECTOR',
+  'SCREENWRITER',
+  'CRITIC',
+  'CINEMATOGRAPHER',
+  'PROMPT_COMPILER',
+];
+
 const STAGE_CONTEXT_KEYS = {
   CONTEXT_INGESTION: 'contextIngestion',
+  MEMORY_RETRIEVAL: 'memoryRetrieval',
   DIRECTOR: 'director',
   SCREENWRITER: 'screenwriter',
   CRITIC: 'critic',
@@ -96,6 +107,7 @@ export const createWorkflowExecution = async ({
   includeRevision = false,
   includeVision = false,
   includeMultimodal = false,
+  includeMemory = false,
 }) => {
   // 1. Verify campaign ownership
   const { data: campaign, error: campaignError } = await supabase
@@ -141,7 +153,7 @@ export const createWorkflowExecution = async ({
   await supabase.from('workflow_executions').insert(executionRow);
 
   // 4. Create pending workflow steps
-  const activeStages =
+  let activeStages =
     stages ||
     (includeRevision
       ? (includeVision || includeMultimodal ? MULTIMODAL_REVISION_WORKFLOW_STAGES : REVISION_WORKFLOW_STAGES)
@@ -153,7 +165,20 @@ export const createWorkflowExecution = async ({
             ? RENDER_WORKFLOW_STAGES
             : includeMedia
               ? FULL_WORKFLOW_STAGES
-              : WORKFLOW_STAGES);
+              : (includeMemory ? MEMORY_WORKFLOW_STAGES : WORKFLOW_STAGES));
+
+  if (includeMemory && !activeStages.includes('MEMORY_RETRIEVAL')) {
+    const ciIdx = activeStages.indexOf('CONTEXT_INGESTION');
+    if (ciIdx !== -1) {
+      activeStages = [
+        ...activeStages.slice(0, ciIdx + 1),
+        'MEMORY_RETRIEVAL',
+        ...activeStages.slice(ciIdx + 1),
+      ];
+    } else {
+      activeStages = ['MEMORY_RETRIEVAL', ...activeStages];
+    }
+  }
   const steps = activeStages.map((stageName, index) => ({
     id: crypto.randomUUID(),
     execution_id: executionId,
@@ -258,6 +283,9 @@ export const executeWorkflowJob = async (job) => {
 
       const output = await runStep(step, context);
       context[contextKey] = output;
+      if (step.step_name === 'MEMORY_RETRIEVAL' && output) {
+        context.memory = output;
+      }
     }
 
     // Check if autonomous revision is required (evaluation failed and not already revised)

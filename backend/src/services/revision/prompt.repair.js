@@ -21,6 +21,7 @@ export class PromptRepairEngine {
     campaign = {},
     creativeBible = {},
     promptSpec = null,
+    memoryContext = null,
   }) {
     if (!target || !target.originalPrompt) {
       throw new PromptRepairError('Invalid target or missing originalPrompt for prompt self-healing');
@@ -111,6 +112,20 @@ export class PromptRepairEngine {
             rule: qualityClause,
           });
           explanations.push('Upgraded visual resolution and texture fidelity');
+        }
+      }
+
+      // 7. Enforce Brand Hard Constraints from MemoryContext
+      const brandHardRules = memoryContext?.hardConstraints || [];
+      for (const rule of brandHardRules) {
+        const ruleVal = typeof rule.value === 'string' ? rule.value : JSON.stringify(rule.value);
+        if (!healedPrompt.toLowerCase().includes(ruleVal.toLowerCase())) {
+          healedPrompt += `, ${ruleVal}`;
+          appliedOperations.push({
+            type: REPAIR_OPERATIONS.ADD_CONSTRAINT,
+            rule: `Brand Hard Constraint: ${ruleVal}`,
+          });
+          explanations.push(`Enforced brand hard constraint: "${ruleVal}"`);
         }
       }
 
