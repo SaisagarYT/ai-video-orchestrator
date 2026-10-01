@@ -10,6 +10,7 @@ import { assetService } from '../services/media/asset.service.js';
 import { renderService } from '../services/rendering/index.js';
 import { subtitleService } from '../services/subtitles/index.js';
 import { evaluationService } from '../services/evaluation/index.js';
+import { revisionService } from '../services/revision/index.js';
 
 const defaultStepHandlers = {
   CONTEXT_INGESTION: async (step, context) => {
@@ -425,11 +426,41 @@ const defaultStepHandlers = {
       passed: evaluationResult.passed,
       dimensions: evaluationResult.dimensions,
       technicalChecks: evaluationResult.technicalChecks,
+      issues: evaluationResult.issues || [],
+      recommendations: evaluationResult.recommendations || [],
+      revisionInstructions: evaluationResult.revisionInstructions || [],
       issuesCount: evaluationResult.issues?.length || 0,
       recommendationsCount: evaluationResult.recommendations?.length || 0,
       revisionInstructionsCount: evaluationResult.revisionInstructions?.length || 0,
       reused: Boolean(reused),
       completedAt: evaluation.created_at,
+    };
+  },
+
+  AUTONOMOUS_REVISION: async (step, context) => {
+    const campaign = context.campaign || {};
+    const executionId = step.execution_id;
+    let initialEvaluation = context.qualityEvaluation || null;
+
+    if (!initialEvaluation) {
+      const evalData = await evaluationService.getLatestEvaluation(campaign.id);
+      initialEvaluation = evalData;
+    }
+
+    const revisionResult = await revisionService.executeAutonomousRevisionLoop({
+      campaignId: campaign.id,
+      executionId,
+      initialEvaluation,
+      context,
+      maxAttempts: campaign.max_revision_attempts || 2,
+    });
+
+    return {
+      status: revisionResult.status,
+      passed: revisionResult.passed,
+      attemptsCount: revisionResult.attempts?.length || 0,
+      finalEvaluation: revisionResult.finalEvaluation,
+      attempts: revisionResult.attempts,
     };
   },
 };

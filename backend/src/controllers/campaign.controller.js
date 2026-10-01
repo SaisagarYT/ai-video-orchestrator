@@ -5,6 +5,7 @@ import { createWorkflowExecution } from '../orchestration/engine.js';
 import { getHistoricalEvents, subscribeToCampaignEvents } from '../orchestration/events.js';
 import { NotFoundError } from '../core/errors/AppError.js';
 import { evaluationService } from '../services/evaluation/index.js';
+import { revisionService } from '../services/revision/index.js';
 
 export const listCampaigns = async (req, res, next) => {
   try {
@@ -238,6 +239,37 @@ export const getCampaignEvaluation = async (req, res, next) => {
   }
 };
 
+export const getCampaignRevisions = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const { data: campaign, error: campaignError } = await supabase
+      .from('campaigns')
+      .select('id, user_id')
+      .eq('id', id)
+      .eq('user_id', req.user.id)
+      .maybeSingle();
+
+    if (campaignError) throw campaignError;
+    if (!campaign) {
+      return next(new NotFoundError('Campaign not found'));
+    }
+
+    const history = await revisionService.getRevisionHistory(id);
+
+    return res.json({
+      success: true,
+      data: {
+        campaignId: id,
+        totalAttempts: history.length,
+        revisions: history,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export default {
   listCampaigns,
   createCampaign,
@@ -246,4 +278,5 @@ export default {
   generateCampaignVideo,
   streamCampaignProgress,
   getCampaignEvaluation,
+  getCampaignRevisions,
 };

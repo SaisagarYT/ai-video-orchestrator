@@ -5,6 +5,7 @@ import { recordWorkflowEvent } from './events.js';
 import { runStep } from './stepRunner.js';
 import { NotFoundError } from '../core/errors/AppError.js';
 import { logger } from '../core/logger/logger.js';
+import { revisionService } from '../services/revision/index.js';
 
 export const WORKFLOW_STAGES = [
   'CONTEXT_INGESTION',
@@ -47,6 +48,11 @@ export const EVALUATION_WORKFLOW_STAGES = [
   'QUALITY_EVALUATION',
 ];
 
+export const REVISION_WORKFLOW_STAGES = [
+  ...EVALUATION_WORKFLOW_STAGES,
+  'AUTONOMOUS_REVISION',
+];
+
 const STAGE_CONTEXT_KEYS = {
   CONTEXT_INGESTION: 'contextIngestion',
   DIRECTOR: 'director',
@@ -61,6 +67,7 @@ const STAGE_CONTEXT_KEYS = {
   VIDEO_RENDER: 'videoRender',
   FINAL_VIDEO_PERSISTENCE: 'finalVideoPersistence',
   QUALITY_EVALUATION: 'qualityEvaluation',
+  AUTONOMOUS_REVISION: 'autonomousRevision',
 };
 
 /**
@@ -74,6 +81,7 @@ export const createWorkflowExecution = async ({
   includeMedia = false,
   includeRender = false,
   includeEvaluation = false,
+  includeRevision = false,
 }) => {
   // 1. Verify campaign ownership
   const { data: campaign, error: campaignError } = await supabase
@@ -121,13 +129,15 @@ export const createWorkflowExecution = async ({
   // 4. Create pending workflow steps
   const activeStages =
     stages ||
-    (includeEvaluation
-      ? EVALUATION_WORKFLOW_STAGES
-      : includeRender
-        ? RENDER_WORKFLOW_STAGES
-        : includeMedia
-          ? FULL_WORKFLOW_STAGES
-          : WORKFLOW_STAGES);
+    (includeRevision
+      ? REVISION_WORKFLOW_STAGES
+      : includeEvaluation
+        ? EVALUATION_WORKFLOW_STAGES
+        : includeRender
+          ? RENDER_WORKFLOW_STAGES
+          : includeMedia
+            ? FULL_WORKFLOW_STAGES
+            : WORKFLOW_STAGES);
   const steps = activeStages.map((stageName, index) => ({
     id: crypto.randomUUID(),
     execution_id: executionId,
@@ -234,12 +244,57 @@ export const executeWorkflowJob = async (job) => {
       context[contextKey] = output;
     }
 
+    // Check if autonomous revision is required (evaluation failed and not already revised)
+    if (
+      context.qualityEvaluation &&
+      context.qualityEvaluation.passed === false &&
+      !context.autonomousRevision &&
+      campaign.auto_revise !== false
+    ) {
+      await supabase
+        .from('workflow_executions')
+        .update({
+          current_stage: 'AUTONOMOUS_REVISION',
+          progress_percent: 95,
+        })
+        .eq('id', executionId);
+
+      await recordWorkflowEvent({
+        executionId,
+        campaignId,
+        eventType: 'STAGE_TRANSITION',
+        payload: { stage: 'AUTONOMOUS_REVISION', progress: 95 },
+      });
+
+      const revisionResult = await revisionService.executeAutonomousRevisionLoop({
+        campaignId,
+        executionId,
+        initialEvaluation: context.qualityEvaluation,
+        context,
+        maxAttempts: campaign.max_revision_attempts || 2,
+      });
+
+      context.autonomousRevision = revisionResult;
+      if (revisionResult.finalEvaluation) {
+        context.qualityEvaluation = revisionResult.finalEvaluation;
+      }
+    }
+
+    const isRevisionExhausted = context.autonomousRevision && !context.autonomousRevision.passed;
+    const isWarningAccepted = context.autonomousRevision?.status === 'WARNING_ACCEPTED';
+    const finalExecutionStatus = isRevisionExhausted
+      ? isWarningAccepted
+        ? 'WARNING_ACCEPTED'
+        : 'REVISION_EXHAUSTED'
+      : 'COMPLETED';
+    const finalStage = isRevisionExhausted ? finalExecutionStatus : 'COMPLETED';
+
     const completedAt = new Date().toISOString();
     await supabase
       .from('workflow_executions')
       .update({
-        status: 'COMPLETED',
-        current_stage: 'COMPLETED',
+        status: finalExecutionStatus,
+        current_stage: finalStage,
         progress_percent: 100,
         completed_at: completedAt,
       })
@@ -247,17 +302,17 @@ export const executeWorkflowJob = async (job) => {
 
     await supabase
       .from('campaigns')
-      .update({ status: 'COMPLETED' })
+      .update({ status: finalExecutionStatus })
       .eq('id', campaignId);
 
     await recordWorkflowEvent({
       executionId,
       campaignId,
       eventType: 'WORKFLOW_COMPLETED',
-      payload: { progress: 100, completedAt },
+      payload: { progress: 100, completedAt, status: finalExecutionStatus },
     });
 
-    return { success: true, executionId };
+    return { success: true, executionId, status: finalExecutionStatus };
   } catch (err) {
     logger.error(`Workflow execution ${executionId} failed`, { error: err.message });
 

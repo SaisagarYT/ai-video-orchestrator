@@ -73,7 +73,7 @@ export const AudioTrackSchema = z.object({
  * Canonical Timeline IR Schema (Zod)
  */
 export const TimelineIRSchema = z.object({
-  version: z.literal(TIMELINE_VERSION).default(TIMELINE_VERSION),
+  version: z.string().min(1).default(TIMELINE_VERSION),
   campaignId: z.string().uuid('Valid campaign UUID is required'),
   workflowExecutionId: z.string().uuid().optional().nullable(),
   output: TimelineOutputConfigSchema.default({}),

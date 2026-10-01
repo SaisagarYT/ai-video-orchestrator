@@ -30,13 +30,14 @@ export class MockEvaluator {
     const forceFail = options.forceFail ?? this.options.forceFail ?? false;
     const weights = DEFAULT_DIMENSION_WEIGHTS;
 
-    let productScore = options.productScore ?? (forceFail ? 5.5 : 9.2);
-    let brandScore = options.brandScore ?? (forceFail ? 6.0 : 8.8);
-    let visualScore = options.visualScore ?? (forceFail ? 6.0 : 9.4);
+    let productScore = options.productScore ?? this.options.productScore ?? (forceFail ? 5.5 : 9.2);
+    let brandScore = options.brandScore ?? this.options.brandScore ?? (forceFail ? 6.0 : 8.8);
+    let visualScore = options.visualScore ?? this.options.visualScore ?? (forceFail ? 6.0 : 9.4);
 
-    if (options.overrideOverallScore !== undefined) {
+    const overrideScore = options.overrideOverallScore ?? this.options.overrideOverallScore;
+    if (overrideScore !== undefined) {
       // Scale dimensions proportionally to hit the target overall score
-      const target = Math.min(10, Math.max(0, options.overrideOverallScore));
+      const target = Math.min(10, Math.max(0, overrideScore));
       productScore = target;
       brandScore = target;
       visualScore = target;
@@ -60,17 +61,22 @@ export class MockEvaluator {
       subtitlesValid: options.subtitlesValid ?? true,
     };
 
-    const issues = [];
-    const recommendations = [];
-    const revisionInstructions = [];
+    const rawIssues = options.issues ?? this.options.issues;
+    const issues = rawIssues ? [...rawIssues] : [];
+    const rawRecs = options.recommendations ?? this.options.recommendations;
+    const recommendations = rawRecs ? [...rawRecs] : [];
+    const rawInstr = options.revisionInstructions ?? this.options.revisionInstructions;
+    const revisionInstructions = rawInstr ? [...rawInstr] : [];
 
     if (forceFail || !passed) {
-      issues.push({
-        severity: ISSUE_SEVERITY.MAJOR,
-        category: ISSUE_CATEGORY.PRODUCT,
-        description: 'Simulated quality gate failure: product hero feature representation falls below standard.',
-        evidence: 'Mock score penalty applied',
-      });
+      if (issues.length === 0) {
+        issues.push({
+          severity: ISSUE_SEVERITY.MAJOR,
+          category: ISSUE_CATEGORY.PRODUCT,
+          description: 'Simulated quality gate failure: product hero feature representation falls below standard.',
+          evidence: 'Mock score penalty applied',
+        });
+      }
       recommendations.push('Review prompt specifications and increase product close-up duration.');
       revisionInstructions.push('Increase visual prompt density for product hero shots by 25%.');
       revisionInstructions.push('Adjust camera angles to prioritize product branding.');

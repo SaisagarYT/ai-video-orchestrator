@@ -76,21 +76,26 @@ All automated tests run via `node --test`:
 30. `tests/integration/workflow.media.test.js`: Complete 9-stage E2E pipeline verifying video, audio, and asset provenance in PostgreSQL.
 31. `tests/integration/workflow.render.test.js`: Complete 12-stage E2E pipeline verifying full advertisement rendering, timeline, render job, and final video in PostgreSQL.
 32. `tests/integration/workflow.evaluation.test.js`: Complete 13-stage E2E pipeline verifying end-to-end evaluation, subtitle asset generation, provenance, and idempotency.
+33. `tests/unit/revision.policy.test.js`: Bounded revision policy (MAX_REVISION_ATTEMPTS = 2), near-threshold acceptance, idempotency key generation.
+34. `tests/unit/revision.planner.test.js`: Selective scene defect diagnosis, issue mapping, structured repair operations, invariant preservation.
+35. `tests/unit/prompt.repair.test.js`: Deterministic prompt self-healing, conflict stripping, lighting upgrade, brand alignment.
+36. `tests/integration/workflow.revision.test.js`: End-to-end autonomous revision loops, selective scene regeneration, timeline v2 rebuild, bounded exhaustion termination, crash recovery.
+37. `tests/integration/revision.api.test.js`: Campaign revision history retrieval, tenant security, provenance tracking.
 
 ---
 
 ## 4. Pending Migration & Non-Migrated Components
 
 The following components remain in the legacy Python codebase and have **NOT** been decommissioned or deleted:
-- **Autonomous Feedback Loops (`evaluation_service.py` auto-regeneration)**: Re-generating scenes based on evaluation failure directives.
 - **Social Media Publishing Integrations**: TikTok API, Meta Ads, Instagram publishing, YouTube Shorts export.
 - **ROAS & Performance Analytics**: Conversion tracking, cost-per-acquisition analytics.
 - **Legacy Python files**: All 96 `.py` files remain untouched in `backend/app/` as architectural reference.
 
 ---
 
-## 5. Next Steps (Slice 7)
+## 5. Next Steps (Slice 8)
 
-- Autonomous revision loop and prompt refinement engine.
-- Selective scene regeneration based on structured evaluation findings.
-- Auto-healing workflows for quality gate failures.
+- Social media publishing integrations and external ad network deployment.
+- Webhook dispatch and delivery tracking for platform publishing.
+- Performance metric telemetry.
+

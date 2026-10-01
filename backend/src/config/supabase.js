@@ -23,6 +23,8 @@ class MemoryDatabaseStore {
       render_jobs: new Map(),
       final_videos: new Map(),
       quality_evaluations: new Map(),
+      revision_attempts: new Map(),
+      revision_targets: new Map(),
     };
   }
 

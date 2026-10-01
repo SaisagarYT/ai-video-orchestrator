@@ -34,6 +34,9 @@ export class RenderService {
     executionId = null,
     stepId = null,
     scenes: passedScenes = null,
+    assets: passedAssets = null,
+    version = null,
+    forceNew = false,
     outputConfig = {},
   }) {
     if (!campaignId) {
@@ -41,17 +44,23 @@ export class RenderService {
     }
 
     // 1. Crash recovery / Idempotency check: see if timeline already created
-    if (executionId) {
-      const { data: existingTimelines } = await this.supabase
+    if (executionId && !forceNew) {
+      let query = this.supabase
         .from('timelines')
         .select('*')
         .eq('campaign_id', campaignId)
         .eq('workflow_execution_id', executionId);
 
+      if (version) {
+        query = query.eq('version', version);
+      }
+
+      const { data: existingTimelines } = await query;
+
       if (existingTimelines && existingTimelines.length > 0) {
         const existing = existingTimelines[0];
         logger.info(
-          `[RenderService] Reusing existing timeline ${existing.id} for execution ${executionId}`
+          `[RenderService] Reusing existing timeline ${existing.id} (version: ${existing.version}) for execution ${executionId}`
         );
         return {
           timeline: existing,
@@ -88,19 +97,23 @@ export class RenderService {
     }
 
     // 4. Fetch persisted assets
-    let assetQuery = this.supabase.from('assets').select('*').eq('campaign_id', campaignId);
-    if (executionId) {
-      assetQuery = assetQuery.eq('workflow_execution_id', executionId);
-    }
-    let { data: assets } = await assetQuery;
-
-    // Fallback: if executionId filter yielded no assets, load all assets for this campaign
+    let assets = passedAssets;
     if (!assets || assets.length === 0) {
-      const { data: allCampaignAssets } = await this.supabase
-        .from('assets')
-        .select('*')
-        .eq('campaign_id', campaignId);
-      assets = allCampaignAssets || [];
+      let assetQuery = this.supabase.from('assets').select('*').eq('campaign_id', campaignId);
+      if (executionId) {
+        assetQuery = assetQuery.eq('workflow_execution_id', executionId);
+      }
+      let { data: dbAssets } = await assetQuery;
+      assets = dbAssets;
+
+      // Fallback: if executionId filter yielded no assets, load all assets for this campaign
+      if (!assets || assets.length === 0) {
+        const { data: allCampaignAssets } = await this.supabase
+          .from('assets')
+          .select('*')
+          .eq('campaign_id', campaignId);
+        assets = allCampaignAssets || [];
+      }
     }
 
     // 5. Construct canonical Timeline IR
@@ -112,17 +125,22 @@ export class RenderService {
       outputConfig,
     });
 
+    const targetVersion = version || timelineIR.version || '1.0';
+
     // 6. Persist timeline record
     const timelineRecord = {
       id: crypto.randomUUID(),
       campaign_id: campaignId,
       workflow_execution_id: executionId,
-      version: timelineIR.version,
+      version: targetVersion,
       duration_ms: timelineIR.durationMs,
       output_config: timelineIR.output,
-      timeline_data: timelineIR,
+      timeline_data: { ...timelineIR, version: targetVersion },
       status: 'READY',
-      metadata: timelineIR.metadata || {},
+      metadata: {
+        ...(timelineIR.metadata || {}),
+        version: targetVersion,
+      },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -412,13 +430,19 @@ export class RenderService {
       throw AppError.badRequest('campaignId is required to persist final video');
     }
 
-    // 1. Check if final video already persisted for this campaign & execution
+    // 1. Check if final video already persisted for this timeline & execution
     if (executionId) {
-      const { data: existingVideos } = await this.supabase
+      let query = this.supabase
         .from('final_videos')
         .select('*')
         .eq('campaign_id', campaignId)
         .eq('workflow_execution_id', executionId);
+
+      if (timelineId) {
+        query = query.eq('timeline_id', timelineId);
+      }
+
+      const { data: existingVideos } = await query;
 
       if (existingVideos && existingVideos.length > 0) {
         logger.info(`[RenderService] Reusing existing final video record ${existingVideos[0].id}`);
