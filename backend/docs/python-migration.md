@@ -28,15 +28,18 @@ In accordance with architectural directives:
 | **Queue & Worker Daemon** | `app/workers/` (`job_worker.py`, `render_worker.py`, `worker_daemon.py`), Redis | `src/orchestration/queue.js`, `src/orchestration/engine.js` | **Migrated & Verified** | `MemoryQueueAdapter` enforces concurrency and events; Supabase PostgreSQL stores durable steps; crash recovery implemented. |
 | **Timeline Construction & IR** | `app/services/timeline_builder.py` | `src/services/timeline/` (`timeline.schema.js`, `timeline.builder.js`, `timeline.validator.js`, `timeline.types.js`) | **Migrated & Verified (Slice 5)** | Canonical Timeline IR v1.0, deterministic scene ordering, asset matching, audio alignment, Zod validation. |
 | **Video Rendering & FFmpeg** | `app/workers/render_worker.py`, FFmpeg scripts | `src/services/rendering/` (`renderer.registry.js`, `mock-renderer.js`, `ffmpeg-renderer.js`, `render.service.js`) | **Migrated & Verified (Slice 5)** | Pluggable renderer abstraction, MockRenderer for offline runs, secure argument-array FFmpegRenderer, Cloudinary persistence, durable `render_jobs` and `final_videos` with full provenance. |
-| **Data Persistence** | `app/models/` (SQLAlchemy / SQLite) | `src/config/supabase.js`, `supabase/migrations/` | **Migrated & Verified** | Full Supabase schema (`campaigns`, `workflow_executions`, `workflow_steps`, `workflow_events`, `users`, `provider_jobs`, `assets`, `timelines`, `render_jobs`, `final_videos`). |
-| **API Transport & Routing** | `app/api/` (FastAPI) | `src/routes/`, `src/controllers/`, `src/app.js` | **Migrated & Verified** | Clean Express routes for Campaigns, Health, Auth, SSE progress streaming, and Generation dispatch. |
+| **Quality Evaluation & QA Gate** | `app/orchestration/evaluation_engine.py`, `app/services/evaluation_service.py` | `src/services/evaluation/` (`evaluation.rules.js`, `evaluation.schema.js`, `evaluation.service.js`, `mock.evaluator.js`) | **Migrated & Verified (Slice 6)** | Product Fidelity (40%), Brand Consistency (30%), Visual Quality (30%) dimensions, deterministic score verification, thresholding, technical checks, and structured revision instructions. Autonomous revision loop is deferred to Slice 7. |
+| **Automated Subtitle Generation** | Scene narration scripts | `src/services/subtitles/` (`subtitle.schema.js`, `subtitle.formatter.js`, `subtitle.service.js`) | **Migrated & Verified (Slice 6)** | Canonical Subtitle Document IR, scene-level timing fallback, SRT and WebVTT formatting, storage persistence, and shell injection protection. |
+| **Audio Mastering & Normalization** | FFmpeg scripts | `src/services/audio/` (`audio.config.js`, `audio.mastering.service.js`) | **Migrated & Verified (Slice 6)** | EBU R128 loudness normalization (`-16.0 LUFS`, `-1.5 dBTP`), 48kHz stereo normalization, synchronization validation, and durable events. |
+| **Data Persistence** | `app/models/` (SQLAlchemy / SQLite) | `src/config/supabase.js`, `supabase/migrations/` | **Migrated & Verified** | Full Supabase schema (`campaigns`, `workflow_executions`, `workflow_steps`, `workflow_events`, `users`, `provider_jobs`, `assets`, `timelines`, `render_jobs`, `final_videos`, `quality_evaluations`). |
+| **API Transport & Routing** | `app/api/` (FastAPI) | `src/routes/`, `src/controllers/`, `src/app.js` | **Migrated & Verified** | Clean Express routes for Campaigns, Health, Auth, SSE progress streaming, Generation dispatch, and Evaluation retrieval. |
 
 ---
 
 ## 3. Test Coverage & Verification
 
 All automated tests run via `node --test`:
-- **102 total tests across 26 suites**
+- **138 total tests across 31 suites**
 - **100% pass rate**
 - **0 external credentials required**
 
@@ -57,31 +60,37 @@ All automated tests run via `node --test`:
 14. `tests/unit/timeline.builder.test.js`: Deterministic sequence sorting, asset matching, audio alignment, aspect ratio scaling.
 15. `tests/unit/renderer.test.js`: RendererRegistry, MockRenderer deterministic offline render, FFmpeg argument construction and security.
 16. `tests/unit/render.service.test.js`: Timeline persistence, durable render jobs, idempotency, StorageProvider upload, and final video provenance.
-17. `tests/unit/queue.test.js`: Queue concurrency, event emission, failure recording.
-18. `tests/unit/auth.middleware.test.js`: Bearer token validation and SSE token extraction.
-19. `tests/unit/stepRunner.test.js`: Step execution lifecycle, retries, and failure states.
-20. `tests/unit/engine.test.js`: Workflow execution lifecycle and idempotency.
-21. `tests/integration/campaign.api.test.js`: Campaign CRUD, multi-tenant user isolation, generation dispatch.
-22. `tests/integration/sse.test.js`: Server-Sent Events historical replay and live event streaming.
-23. `tests/integration/recovery.test.js`: Crash recovery for orphaned workflows on startup.
-24. `tests/integration/workflow.intelligence.test.js`: E2E workflow run verifying that all 6 stage artifacts in PostgreSQL contain the migrated intelligence structures.
-25. `tests/integration/workflow.media.test.js`: Complete 9-stage E2E pipeline verifying video, audio, and asset provenance in PostgreSQL.
-26. `tests/integration/workflow.render.test.js`: Complete 12-stage E2E pipeline verifying full advertisement rendering, timeline, render job, and final video in PostgreSQL.
+17. `tests/unit/evaluation.schema.test.js`: Canonical evaluation schema, range validation, weighted score formula check, threshold verdicts.
+18. `tests/unit/evaluation.service.test.js`: Rules engine, mock evaluator, score bounds, technical checks, persistence in `quality_evaluations`, and idempotency.
+19. `tests/unit/subtitle.service.test.js`: Subtitle cue generation, schema validation, SRT/VTT formatting, storage persistence, and shell injection protection.
+20. `tests/unit/audio.mastering.test.js`: Audio mastering configuration, true peak/LUFS validation, FFmpeg filter construction, and event emission.
+21. `tests/unit/queue.test.js`: Queue concurrency, event emission, failure recording.
+22. `tests/unit/auth.middleware.test.js`: Bearer token validation and SSE token extraction.
+23. `tests/unit/stepRunner.test.js`: Step execution lifecycle, retries, and failure states.
+24. `tests/unit/engine.test.js`: Workflow execution lifecycle and idempotency.
+25. `tests/integration/campaign.api.test.js`: Campaign CRUD, multi-tenant user isolation, generation dispatch.
+26. `tests/integration/evaluation.api.test.js`: Campaign evaluation retrieval endpoint, multi-tenant isolation, 404 handling.
+27. `tests/integration/sse.test.js`: Server-Sent Events historical replay and live event streaming.
+28. `tests/integration/recovery.test.js`: Crash recovery for orphaned workflows on startup.
+29. `tests/integration/workflow.intelligence.test.js`: E2E workflow run verifying that all 6 stage artifacts in PostgreSQL contain the migrated intelligence structures.
+30. `tests/integration/workflow.media.test.js`: Complete 9-stage E2E pipeline verifying video, audio, and asset provenance in PostgreSQL.
+31. `tests/integration/workflow.render.test.js`: Complete 12-stage E2E pipeline verifying full advertisement rendering, timeline, render job, and final video in PostgreSQL.
+32. `tests/integration/workflow.evaluation.test.js`: Complete 13-stage E2E pipeline verifying end-to-end evaluation, subtitle asset generation, provenance, and idempotency.
 
 ---
 
 ## 4. Pending Migration & Non-Migrated Components
 
 The following components remain in the legacy Python codebase and have **NOT** been decommissioned or deleted:
-- **Quality Evaluation & QA Engine (`evaluation_engine.py`)**: Video quality scoring, brand guideline verification, visual consistency analysis.
+- **Autonomous Feedback Loops (`evaluation_service.py` auto-regeneration)**: Re-generating scenes based on evaluation failure directives.
 - **Social Media Publishing Integrations**: TikTok API, Meta Ads, Instagram publishing, YouTube Shorts export.
-- **Autonomous Feedback Loops**: Autonomous prompt revision based on evaluation scores.
+- **ROAS & Performance Analytics**: Conversion tracking, cost-per-acquisition analytics.
 - **Legacy Python files**: All 96 `.py` files remain untouched in `backend/app/` as architectural reference.
 
 ---
 
-## 5. Next Steps (Slice 6)
+## 5. Next Steps (Slice 7)
 
-- Autonomous quality evaluation and brand consistency scoring (`evaluation_engine.py` migration).
-- Subtitle generation and burned-in captions.
-- Advanced audio mixing and background music ducking.
+- Autonomous revision loop and prompt refinement engine.
+- Selective scene regeneration based on structured evaluation findings.
+- Auto-healing workflows for quality gate failures.

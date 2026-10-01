@@ -68,6 +68,35 @@ export const config = {
     maxDurationMs: parseInt(process.env.RENDER_MAX_DURATION_MS || '300000', 10),
     tempDir: process.env.RENDER_TEMP_DIR || null,
   },
+
+  // Quality Evaluation Configuration (Slice 6)
+  evaluation: {
+    provider: process.env.AI_EVALUATION_PROVIDER || 'mock',
+    threshold: parseFloat(process.env.EVALUATION_THRESHOLD || '7.5'),
+    productWeight: parseFloat(process.env.EVALUATION_PRODUCT_WEIGHT || '0.40'),
+    brandWeight: parseFloat(process.env.EVALUATION_BRAND_WEIGHT || '0.30'),
+    visualWeight: parseFloat(process.env.EVALUATION_VISUAL_WEIGHT || '0.30'),
+    strictMode: process.env.EVALUATION_STRICT_MODE === 'true',
+  },
+
+  // Automated Subtitle Configuration (Slice 6)
+  subtitles: {
+    provider: process.env.SUBTITLE_PROVIDER || 'mock',
+    mode: process.env.SUBTITLE_MODE || 'sidecar', // 'none' | 'sidecar' | 'burned'
+    language: process.env.SUBTITLE_LANGUAGE || 'en',
+    format: process.env.SUBTITLE_FORMAT || 'srt', // 'srt' | 'vtt'
+  },
+
+  // Audio Mastering Configuration (Slice 6)
+  audioMastering: {
+    provider: process.env.AUDIO_MASTERING_PROVIDER || 'mock',
+    targetLufs: parseFloat(process.env.AUDIO_TARGET_LUFS || '-16.0'),
+    truePeak: parseFloat(process.env.AUDIO_TRUE_PEAK || '-1.5'),
+    sampleRate: parseInt(process.env.AUDIO_SAMPLE_RATE || '48000', 10),
+    channels: parseInt(process.env.AUDIO_CHANNELS || '2', 10),
+    codec: process.env.AUDIO_CODEC || 'aac',
+    bitrate: process.env.AUDIO_BITRATE || '192k',
+  },
 };
 
 export default config;

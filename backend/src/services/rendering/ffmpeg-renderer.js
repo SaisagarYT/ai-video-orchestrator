@@ -62,7 +62,7 @@ export class FFmpegRenderer {
    * @param {string} outputPath - Local output MP4 path
    * @returns {Array<string>}
    */
-  buildFFmpegArguments(timeline, inputVideoPaths = [], inputAudioPaths = [], outputPath) {
+  buildFFmpegArguments(timeline, inputVideoPaths = [], inputAudioPaths = [], outputPath, options = {}) {
     const args = ['-y', '-hide_banner', '-loglevel', 'error'];
     const { width, height, fps } = timeline.output;
 
@@ -98,10 +98,22 @@ export class FFmpegRenderer {
       `${videoConcatInputs.join('')}concat=n=${videoInputCount}:v=1:a=0[${concatenatedVideoLabel}]`
     );
 
+    let finalVideoMap = `[${concatenatedVideoLabel}]`;
+
+    // 4. Subtitle Burning (if burned mode requested and subtitle file provided)
+    if (options.subtitleMode === 'burned' && options.subtitlesPath) {
+      // Escape Windows drive colon and backslashes for FFmpeg filter parser
+      const escapedSubPath = String(options.subtitlesPath).replace(/\\/g, '/').replace(/:/g, '\\:');
+      const subtitledLabel = 'vsubtitled';
+      filterParts.push(`${finalVideoMap}subtitles='${escapedSubPath}'[${subtitledLabel}]`);
+      finalVideoMap = `[${subtitledLabel}]`;
+    }
+
+    // 5. Audio Concatenation and Mastering (Loudness Normalization)
     let finalAudioMap = null;
 
     if (audioInputCount > 0) {
-      // If we have narration audio inputs, concatenate or mix them
+      // If we have narration audio inputs, concatenate them
       const audioConcatInputs = [];
       for (let j = 0; j < audioInputCount; j++) {
         const inputIndex = videoInputCount + j;
@@ -111,15 +123,27 @@ export class FFmpegRenderer {
       filterParts.push(
         `${audioConcatInputs.join('')}concat=n=${audioInputCount}:v=0:a=1[${concatenatedAudioLabel}]`
       );
-      finalAudioMap = `[${concatenatedAudioLabel}]`;
+
+      // Apply basic audio mastering (EBU R128 / loudnorm)
+      if (options.masterAudio !== false) {
+        const masteredAudioLabel = 'amastered';
+        const targetLufs = options.targetLufs ?? -16.0;
+        const truePeak = options.truePeak ?? -1.5;
+        filterParts.push(
+          `[${concatenatedAudioLabel}]loudnorm=I=${targetLufs}:TP=${truePeak}:LRA=11[${masteredAudioLabel}]`
+        );
+        finalAudioMap = `[${masteredAudioLabel}]`;
+      } else {
+        finalAudioMap = `[${concatenatedAudioLabel}]`;
+      }
     }
 
     args.push('-filter_complex', filterParts.join(';'));
-    args.push('-map', `[${concatenatedVideoLabel}]`);
+    args.push('-map', finalVideoMap);
 
     if (finalAudioMap) {
       args.push('-map', finalAudioMap);
-      args.push('-c:a', 'aac', '-b:a', '192k');
+      args.push('-c:a', 'aac', '-b:a', '192k', '-ar', '48000', '-ac', '2');
     }
 
     // Output video encoding settings (H.264, standard pixel format, faststart for streaming)

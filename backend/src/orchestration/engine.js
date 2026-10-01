@@ -42,6 +42,11 @@ export const RENDER_WORKFLOW_STAGES = [
   'FINAL_VIDEO_PERSISTENCE',
 ];
 
+export const EVALUATION_WORKFLOW_STAGES = [
+  ...RENDER_WORKFLOW_STAGES,
+  'QUALITY_EVALUATION',
+];
+
 const STAGE_CONTEXT_KEYS = {
   CONTEXT_INGESTION: 'contextIngestion',
   DIRECTOR: 'director',
@@ -55,6 +60,7 @@ const STAGE_CONTEXT_KEYS = {
   TIMELINE_BUILD: 'timelineBuild',
   VIDEO_RENDER: 'videoRender',
   FINAL_VIDEO_PERSISTENCE: 'finalVideoPersistence',
+  QUALITY_EVALUATION: 'qualityEvaluation',
 };
 
 /**
@@ -67,6 +73,7 @@ export const createWorkflowExecution = async ({
   stages = null,
   includeMedia = false,
   includeRender = false,
+  includeEvaluation = false,
 }) => {
   // 1. Verify campaign ownership
   const { data: campaign, error: campaignError } = await supabase
@@ -114,7 +121,13 @@ export const createWorkflowExecution = async ({
   // 4. Create pending workflow steps
   const activeStages =
     stages ||
-    (includeRender ? RENDER_WORKFLOW_STAGES : includeMedia ? FULL_WORKFLOW_STAGES : WORKFLOW_STAGES);
+    (includeEvaluation
+      ? EVALUATION_WORKFLOW_STAGES
+      : includeRender
+        ? RENDER_WORKFLOW_STAGES
+        : includeMedia
+          ? FULL_WORKFLOW_STAGES
+          : WORKFLOW_STAGES);
   const steps = activeStages.map((stageName, index) => ({
     id: crypto.randomUUID(),
     execution_id: executionId,

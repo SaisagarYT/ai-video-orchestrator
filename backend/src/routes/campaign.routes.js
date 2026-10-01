@@ -7,6 +7,7 @@ import {
   updateCampaign,
   generateCampaignVideo,
   streamCampaignProgress,
+  getCampaignEvaluation,
 } from '../controllers/campaign.controller.js';
 
 const router = Router();
@@ -21,5 +22,6 @@ router.post('/', createCampaign);
 router.get('/:id', getCampaign);
 router.put('/:id', updateCampaign);
 router.post('/:id/generate', generateCampaignVideo);
+router.get('/:id/evaluation', getCampaignEvaluation);
 
 export default router;

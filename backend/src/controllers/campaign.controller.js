@@ -4,6 +4,7 @@ import { createCampaignSchema, updateCampaignSchema } from '../schemas/campaign.
 import { createWorkflowExecution } from '../orchestration/engine.js';
 import { getHistoricalEvents, subscribeToCampaignEvents } from '../orchestration/events.js';
 import { NotFoundError } from '../core/errors/AppError.js';
+import { evaluationService } from '../services/evaluation/index.js';
 
 export const listCampaigns = async (req, res, next) => {
   try {
@@ -194,6 +195,49 @@ export const streamCampaignProgress = async (req, res, next) => {
   }
 };
 
+export const getCampaignEvaluation = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // Verify campaign ownership
+    const { data: campaign, error: campaignError } = await supabase
+      .from('campaigns')
+      .select('id, user_id')
+      .eq('id', id)
+      .eq('user_id', req.user.id)
+      .maybeSingle();
+
+    if (campaignError) throw campaignError;
+    if (!campaign) {
+      return next(new NotFoundError('Campaign not found'));
+    }
+
+    const evaluation = await evaluationService.getLatestEvaluation(id);
+
+    return res.json({
+      success: true,
+      data: {
+        evaluationId: evaluation.id,
+        campaignId: evaluation.campaign_id,
+        workflowExecutionId: evaluation.workflow_execution_id,
+        finalVideoId: evaluation.final_video_id,
+        evaluationVersion: evaluation.evaluation_version,
+        overallScore: Number(evaluation.overall_score),
+        threshold: Number(evaluation.threshold),
+        passed: Boolean(evaluation.passed),
+        dimensions: evaluation.dimensions,
+        technicalChecks: evaluation.technical_checks,
+        issues: evaluation.issues || [],
+        recommendations: evaluation.recommendations || [],
+        revisionInstructions: evaluation.revision_instructions || [],
+        createdAt: evaluation.created_at,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export default {
   listCampaigns,
   createCampaign,
@@ -201,4 +245,5 @@ export default {
   updateCampaign,
   generateCampaignVideo,
   streamCampaignProgress,
+  getCampaignEvaluation,
 };

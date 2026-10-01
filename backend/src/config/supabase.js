@@ -22,6 +22,7 @@ class MemoryDatabaseStore {
       timelines: new Map(),
       render_jobs: new Map(),
       final_videos: new Map(),
+      quality_evaluations: new Map(),
     };
   }
 

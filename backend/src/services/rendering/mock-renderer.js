@@ -58,6 +58,15 @@ export class MockRenderer {
         fps: validatedTimeline.output.fps,
         videoCodec: validatedTimeline.output.videoCodec,
         audioCodec: validatedTimeline.output.audioCodec,
+        subtitles: {
+          mode: options.subtitleMode || 'sidecar',
+          path: options.subtitlesPath || null,
+        },
+        audioMastering: {
+          mastered: options.masterAudio !== false,
+          targetLufs: options.targetLufs ?? -16.0,
+          sampleRate: 48000,
+        },
         renderedAt: new Date().toISOString(),
       },
     };

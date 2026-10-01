@@ -8,6 +8,8 @@ import { sceneGenerationService } from '../services/media/scene-generation.servi
 import { narrationGenerationService } from '../services/media/narration-generation.service.js';
 import { assetService } from '../services/media/asset.service.js';
 import { renderService } from '../services/rendering/index.js';
+import { subtitleService } from '../services/subtitles/index.js';
+import { evaluationService } from '../services/evaluation/index.js';
 
 const defaultStepHandlers = {
   CONTEXT_INGESTION: async (step, context) => {
@@ -255,11 +257,28 @@ const defaultStepHandlers = {
       },
     });
 
+    // Generate and persist automated subtitles from scene narration
+    let subtitleAsset = null;
+    try {
+      const subResult = await subtitleService.generateSubtitlesFromScenes({
+        campaignId: campaign.id,
+        executionId,
+        stepId: step.id,
+        scenes: workflowScenes,
+        maxDurationMs: timeline.duration_ms,
+      });
+      subtitleAsset = subResult.asset;
+    } catch (subErr) {
+      logger.warn(`[TimelineBuild] Subtitle generation notice: ${subErr.message}`);
+    }
+
     return {
       timelineId: timeline.id,
       durationMs: timeline.duration_ms,
       outputConfig: timeline.output_config,
       totalScenes: timelineIR.tracks.find((t) => t.type === 'video')?.items.length || 0,
+      subtitleAssetId: subtitleAsset?.id || null,
+      subtitleUrl: subtitleAsset?.secure_url || subtitleAsset?.url || null,
       reused: Boolean(reused),
       status: 'READY',
     };
@@ -365,6 +384,52 @@ const defaultStepHandlers = {
       height: finalVideo.height,
       status: finalVideo.status,
       completedAt: finalVideo.completed_at,
+    };
+  },
+
+  QUALITY_EVALUATION: async (step, context) => {
+    const campaign = context.campaign || {};
+    const executionId = step.execution_id;
+
+    // Resolve final video ID from previous step or database
+    let finalVideoId = context.finalVideoPersistence?.finalVideoId;
+    if (!finalVideoId) {
+      const { data: videos } = await supabase
+        .from('final_videos')
+        .select('id')
+        .eq('campaign_id', campaign.id)
+        .eq('workflow_execution_id', executionId)
+        .order('created_at', { ascending: false });
+      finalVideoId = videos?.[0]?.id || null;
+    }
+
+    const { evaluation, evaluationResult, reused } = await evaluationService.evaluateFinalVideo({
+      campaignId: campaign.id,
+      executionId,
+      stepId: step.id,
+      finalVideoId,
+      threshold: campaign.evaluation_threshold || null,
+      options: {
+        creativeBible: context.screenwriter?.creativeBible,
+        scenes: context.screenwriter?.scenes,
+      },
+    });
+
+    return {
+      evaluationId: evaluation.id,
+      campaignId: campaign.id,
+      workflowExecutionId: executionId,
+      finalVideoId,
+      overallScore: evaluationResult.overallScore,
+      threshold: evaluationResult.threshold,
+      passed: evaluationResult.passed,
+      dimensions: evaluationResult.dimensions,
+      technicalChecks: evaluationResult.technicalChecks,
+      issuesCount: evaluationResult.issues?.length || 0,
+      recommendationsCount: evaluationResult.recommendations?.length || 0,
+      revisionInstructionsCount: evaluationResult.revisionInstructions?.length || 0,
+      reused: Boolean(reused),
+      completedAt: evaluation.created_at,
     };
   },
 };
