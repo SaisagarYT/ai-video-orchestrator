@@ -72,6 +72,7 @@ export const canonicalEvaluationResultSchema = z.object({
     visualQuality: dimensionScoreSchema,
   }),
   technicalChecks: technicalChecksSchema,
+  adaptationChecks: z.record(z.any()).optional(),
   issues: z.array(evaluationIssueSchema).default([]),
   recommendations: z.array(z.string()).default([]),
   revisionInstructions: z.array(z.string()).default([]),

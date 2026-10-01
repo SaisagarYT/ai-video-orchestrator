@@ -30,6 +30,7 @@ class MemoryDatabaseStore {
       brand_memory_items: new Map(),
       creative_memory_items: new Map(),
       memory_evidence: new Map(),
+      campaign_adaptations: new Map(),
     };
   }
 

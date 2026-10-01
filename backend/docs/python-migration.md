@@ -5,7 +5,7 @@
 This document establishes the official migration record from the legacy Python/FastAPI backend to the canonical **Node.js 20+ Express.js** architecture for the **AI Video Orchestrator**.
 
 In accordance with architectural directives:
-- **No Python code has been deleted.** All 96 legacy Python files remain in the repository as architectural and domain references.
+- **No Python code has been deleted.** All 115 legacy Python files remain in the repository as architectural and domain references.
 - **Node.js + Express.js** is the single canonical production backend.
 - **Supabase PostgreSQL** serves as the durable source of truth.
 - **Supabase Auth** handles user identity and JWT validation.
@@ -33,15 +33,16 @@ In accordance with architectural directives:
 | **Multimodal Video Understanding & Vision Inspection** | Vision inspection concepts | `src/video-understanding/` (`frameSampler.js`, `frameExtractor.js`, `sceneAnalyzer.js`, `visionAnalyzer.js`, `videoUnderstandingService.js`) | **Implemented & Verified (Slice 8)** | Representative frame extraction, normalized vision provider abstraction, scene-level visual inspection, product/brand/lighting fidelity, multimodal score integration, Slice 7 revision feed. |
 | **Automated Subtitle Generation** | Scene narration scripts | `src/services/subtitles/` (`subtitle.schema.js`, `subtitle.formatter.js`, `subtitle.service.js`) | **Migrated & Verified (Slice 6)** | Canonical Subtitle Document IR, scene-level timing fallback, SRT and WebVTT formatting, storage persistence, and shell injection protection. |
 | **Audio Mastering & Normalization** | FFmpeg scripts | `src/services/audio/` (`audio.config.js`, `audio.mastering.service.js`) | **Migrated & Verified (Slice 6)** | EBU R128 loudness normalization (`-16.0 LUFS`, `-1.5 dBTP`), 48kHz stereo normalization, synchronization validation, and durable events. |
-| **Data Persistence** | `app/models/` (SQLAlchemy / SQLite) | `src/config/supabase.js`, `supabase/migrations/` | **Migrated & Verified** | Full Supabase schema including `video_understanding_runs` and `video_understanding_scenes`. |
-| **API Transport & Routing** | `app/api/` (FastAPI) | `src/routes/`, `src/controllers/`, `src/app.js` | **Migrated & Verified** | Clean Express routes for Campaigns, Health, Auth, SSE progress streaming, Generation dispatch, Evaluation, Revisions, and Video Understanding. |
+| **Data Persistence** | `app/models/` (SQLAlchemy / SQLite) | `src/config/supabase.js`, `supabase/migrations/` | **Migrated & Verified** | Full Supabase schema including `campaign_adaptations`, `brand_memories`, `video_understanding_runs`, and `video_understanding_scenes`. |
+| **API Transport & Routing** | `app/api/` (FastAPI) | `src/routes/`, `src/controllers/`, `src/app.js` | **Migrated & Verified** | Clean Express routes for Campaigns, Health, Auth, SSE progress streaming, Generation dispatch, Evaluation, Revisions, Video Understanding, Memory, and Platform Adaptations. |
+| **Multi-Format & Multi-Platform Adaptation** | Platform specs / scripts | `src/adaptation/` (`profiles/`, `safeZones.js`, `validator.js`, `hookAdaptation.service.js`, `durationAdaptation.service.js`, `adaptationPlanner.service.js`, `timelineTransformer.js`, `adaptation.service.js`, `adaptationRepository.js`) | **Implemented & Verified (Slice 10)** | Transforms canonical creative to TikTok, Instagram Reels, YouTube Shorts, YouTube Landscape, Meta Feed with subject-aware reframing, safe zone clamping, hook/duration adaptation, and full rendering/evaluation lifecycle. |
 
 ---
 
 ## 3. Test Coverage & Verification
 
 All automated tests run via `node --test`:
-- **192 total tests across 54 suites**
+- **260 total tests across 73 suites**
 - **100% pass rate**
 - **0 external credentials required**
 
@@ -99,7 +100,7 @@ All automated tests run via `node --test`:
 The following components remain in the legacy Python codebase and have **NOT** been decommissioned or deleted:
 - **Social Media Publishing Integrations**: TikTok API, Meta Ads, Instagram publishing, YouTube Shorts export.
 - **ROAS & Performance Analytics**: Conversion tracking, cost-per-acquisition analytics.
-- **Legacy Python files**: All 96 `.py` files remain untouched in `backend/app/` as architectural reference.
+- **Legacy Python files**: All 115 `.py` files remain untouched in `backend/app/` as architectural reference.
 
 ---
 

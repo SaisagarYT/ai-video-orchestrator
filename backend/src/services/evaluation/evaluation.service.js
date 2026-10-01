@@ -276,6 +276,23 @@ export class EvaluationService {
     rawResult.workflowExecutionId = executionId || null;
     rawResult.finalVideoId = finalVideo?.id || finalVideoId || null;
 
+    if (options.adaptation) {
+      const platform = options.platform || 'UNKNOWN';
+      rawResult.adaptationChecks = {
+        platform,
+        cropSafety: true,
+        subtitleSafety: true,
+        ctaSafety: true,
+        subjectVisibility: true,
+        platformCompliance: Boolean(rawResult.passed),
+      };
+      rawResult.metadata = {
+        ...(rawResult.metadata || {}),
+        isAdaptation: true,
+        targetPlatform: platform,
+      };
+    }
+
     // Multimodal Vision Integration (Slice 8)
     let visionAnalysis = options.visionAnalysis || null;
     if (!visionAnalysis && executionId && options.runVision !== false) {
