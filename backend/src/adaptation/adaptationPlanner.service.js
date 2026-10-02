@@ -7,18 +7,7 @@ import { CROP_STRATEGIES } from './constants.js';
 import { AppError } from '../core/errors/AppError.js';
 
 export class AdaptationPlannerService {
-  /**
-   * Plan deterministic adaptation from canonical timeline to target platform.
-   *
-   * @param {object} params
-   * @param {object} params.canonicalTimeline - Canonical Timeline IR
-   * @param {object} params.campaign - Campaign record
-   * @param {object} [params.creativeBible] - Creative Bible
-   * @param {object} [params.memorySnapshot] - Frozen brand memory snapshot
-   * @param {import('./types.js').PlatformProfile} params.platformProfile - Target platform profile
-   * @param {object} [params.visionEvidence] - Multimodal vision inspection findings
-   * @returns {import('./types.js').AdaptationPlan}
-   */
+  // Plan deterministic adaptation from canonical timeline to target platform profile
   static planAdaptation({
     canonicalTimeline,
     campaign,

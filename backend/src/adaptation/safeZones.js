@@ -1,15 +1,7 @@
 import { CROP_STRATEGIES } from './constants.js';
 
 export class SafeZoneService {
-  /**
-   * Check if child rect is completely contained within container safe zone.
-   * All coordinates normalized (0.0 to 1.0).
-   *
-   * @param {import('./types.js').NormalizedRect} container
-   * @param {import('./types.js').NormalizedRect} child
-   * @param {number} [tolerance=0.001]
-   * @returns {boolean}
-   */
+  // Check if child rect is completely contained within container safe zone (0.0 to 1.0)
   static contains(container, child, tolerance = 0.001) {
     if (!container || !child) return false;
     const cRight = container.x + container.width;
@@ -25,13 +17,7 @@ export class SafeZoneService {
     );
   }
 
-  /**
-   * Check if two rects intersect.
-   *
-   * @param {import('./types.js').NormalizedRect} a
-   * @param {import('./types.js').NormalizedRect} b
-   * @returns {boolean}
-   */
+  // Check if two rects intersect
   static intersects(a, b) {
     if (!a || !b) return false;
     return (
@@ -42,13 +28,7 @@ export class SafeZoneService {
     );
   }
 
-  /**
-   * Clamp and position a rect into a target safe zone.
-   *
-   * @param {import('./types.js').NormalizedRect} rect
-   * @param {import('./types.js').NormalizedRect} safeZone
-   * @returns {import('./types.js').NormalizedRect}
-   */
+  // Clamp and position a rect into a target safe zone
   static clampToSafeZone(rect, safeZone) {
     const width = Math.min(rect.width, safeZone.width);
     const height = Math.min(rect.height, safeZone.height);
@@ -64,16 +44,7 @@ export class SafeZoneService {
     };
   }
 
-  /**
-   * Compute normalized crop rectangle for aspect ratio transformation.
-   *
-   * @param {object} params
-   * @param {'9:16'|'16:9'|'1:1'} params.sourceAspectRatio
-   * @param {'9:16'|'16:9'|'1:1'} params.targetAspectRatio
-   * @param {{ x: number, y: number }} [params.focalPoint={ x: 0.5, y: 0.5 }]
-   * @param {string} [params.strategy=CROP_STRATEGIES.CENTER_CROP]
-   * @returns {import('./types.js').NormalizedRect}
-   */
+  // Compute normalized crop rectangle for aspect ratio transformation
   static calculateAspectCropBox({
     sourceAspectRatio,
     targetAspectRatio,

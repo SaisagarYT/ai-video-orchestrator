@@ -2,16 +2,7 @@ import { SafeZoneService } from './safeZones.js';
 import { adaptationValidationResultSchema } from './schemas.js';
 
 export class PlatformConstraintValidator {
-  /**
-   * Validate a Timeline IR against a Platform Profile.
-   *
-   * @param {object} params
-   * @param {object} params.timeline - Timeline IR
-   * @param {import('./types.js').PlatformProfile} params.profile - Platform Profile
-   * @param {object} [params.subtitles] - Optional subtitle document or metadata
-   * @param {object} [params.ctaPlacement] - Optional CTA placement rect
-   * @returns {import('./types.js').AdaptationValidationResult}
-   */
+  // Validate a Timeline IR against platform constraints (aspect ratio, resolution, duration, audio, safe zones)
   static validateTimelineForPlatform({ timeline, profile, subtitles = null, ctaPlacement = null }) {
     const violations = [];
     const warnings = [];

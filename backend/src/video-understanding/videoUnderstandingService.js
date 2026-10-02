@@ -20,16 +20,7 @@ export class VideoUnderstandingService {
     return `vision:${executionId}:${finalVideoId || 'default'}:v1`;
   }
 
-  /**
-   * Run full multimodal video understanding pipeline on a rendered video.
-   * @param {Object} params
-   * @param {string} params.campaignId
-   * @param {string} params.executionId
-   * @param {string} [params.stepId]
-   * @param {string} [params.finalVideoId]
-   * @param {Object} [params.options]
-   * @returns {Promise<Object>} { run, scenes, reused }
-   */
+  // Run full multimodal video understanding pipeline on a rendered video
   async analyzeVideo({
     campaignId,
     executionId,
@@ -308,11 +299,7 @@ export class VideoUnderstandingService {
     }
   }
 
-  /**
-   * Fetch the latest video understanding run for a campaign with sanitized fields.
-   * @param {string} campaignId
-   * @returns {Promise<Object|null>}
-   */
+  // Fetch the latest video understanding run for a campaign with sanitized fields
   async getLatestRun(campaignId) {
     const { data: runs } = await supabase
       .from('video_understanding_runs')

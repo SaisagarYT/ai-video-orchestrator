@@ -5,12 +5,7 @@ import { AdaptationNotFoundError, AdaptationConflictError } from './errors.js';
 import { logger } from '../core/logger/logger.js';
 
 export class AdaptationRepository {
-  /**
-   * Create a new campaign adaptation record.
-   *
-   * @param {object} adaptationData
-   * @returns {Promise<object>}
-   */
+  // Create a new campaign adaptation record
   async createAdaptation(adaptationData) {
     const validated = campaignAdaptationRecordSchema.parse({
       ...adaptationData,
@@ -43,12 +38,7 @@ export class AdaptationRepository {
     return data || validated;
   }
 
-  /**
-   * Retrieve an adaptation by its UUID.
-   *
-   * @param {string} id
-   * @returns {Promise<object>}
-   */
+  // Retrieve an adaptation by its UUID
   async getAdaptationById(id) {
     if (!id) throw new AdaptationNotFoundError('Adaptation ID is required');
 
@@ -65,12 +55,7 @@ export class AdaptationRepository {
     return data;
   }
 
-  /**
-   * Retrieve an adaptation by idempotency key.
-   *
-   * @param {string} key
-   * @returns {Promise<object|null>}
-   */
+  // Retrieve an adaptation by idempotency key
   async getAdaptationByIdempotencyKey(key) {
     if (!key) return null;
 
@@ -82,13 +67,7 @@ export class AdaptationRepository {
     return data && data.length > 0 ? data[0] : null;
   }
 
-  /**
-   * Update an adaptation by ID.
-   *
-   * @param {string} id
-   * @param {object} updates
-   * @returns {Promise<object>}
-   */
+  // Update an adaptation by ID
   async updateAdaptation(id, updates) {
     const payload = {
       ...updates,
@@ -109,13 +88,7 @@ export class AdaptationRepository {
     return data;
   }
 
-  /**
-   * List adaptations for a campaign with optional filtering.
-   *
-   * @param {string} campaignId
-   * @param {object} [filters={}]
-   * @returns {Promise<Array<object>>}
-   */
+  // List adaptations for a campaign with optional filtering
   async listAdaptationsByCampaign(campaignId, filters = {}) {
     let query = supabase
       .from('campaign_adaptations')

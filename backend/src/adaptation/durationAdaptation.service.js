@@ -1,14 +1,7 @@
 import { DURATION_STRATEGIES } from './constants.js';
 
 export class DurationAdaptationService {
-  /**
-   * Plan deterministic duration adaptation for timeline scenes.
-   *
-   * @param {object} params
-   * @param {Array<object>} params.scenes - Scene specifications
-   * @param {import('./types.js').PlatformProfile} params.profile - Target platform profile
-   * @returns {{ sceneModifications: Array<object>, totalDurationMs: number, totalDurationSeconds: number }}
-   */
+  // Plan deterministic duration adaptation (compress, pad, or preserve) for timeline scenes
   static planDurationAdaptation({ scenes = [], profile }) {
     if (!Array.isArray(scenes) || scenes.length === 0) {
       return {

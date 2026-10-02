@@ -5,15 +5,7 @@ import { memoryContextSchema } from './schemas.js';
 import { MEMORY_STATUS, MEMORY_TYPES, BRAND_MEMORY_CATEGORIES } from './memory.constants.js';
 
 export class MemoryRetrievalService {
-  /**
-   * Deterministically retrieves, filters, and snapshots brand and creative memory for a campaign.
-   *
-   * @param {object} params
-   * @param {string} params.businessId
-   * @param {object} [params.campaign={}]
-   * @param {string} [params.executionId=null]
-   * @returns {Promise<object>} Frozen MemoryContext snapshot
-   */
+  // Deterministically retrieves, filters, and snapshots brand and creative memory for a campaign
   async retrieveMemoryContext({ businessId, campaign = {}, executionId = null }) {
     const campaignId = campaign.id || null;
 

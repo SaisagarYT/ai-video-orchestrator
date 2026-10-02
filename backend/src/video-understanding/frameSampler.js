@@ -1,13 +1,7 @@
 import { DEFAULT_FRAMES_PER_SCENE, MAX_FRAMES_PER_SCENE } from './types.js';
 
 export class FrameSampler {
-  /**
-   * Compute deterministic, equidistant timestamps for a single scene duration.
-   * @param {Object} params
-   * @param {number} params.durationSeconds
-   * @param {number} [params.sampleCount=5]
-   * @returns {number[]} Array of timestamps in seconds
-   */
+    // Compute deterministic, equidistant timestamps for a single scene duration.
   static sampleSceneTimestamps({ durationSeconds = 5, sampleCount = DEFAULT_FRAMES_PER_SCENE } = {}) {
     const duration = Math.max(0, Number(durationSeconds) || 0);
     const count = Math.min(MAX_FRAMES_PER_SCENE, Math.max(1, parseInt(sampleCount, 10) || DEFAULT_FRAMES_PER_SCENE));
@@ -32,13 +26,7 @@ export class FrameSampler {
     return Array.from(new Set(rawTimestamps)).sort((a, b) => a - b);
   }
 
-  /**
-   * Plan frame sampling for multiple sequential scenes across a composite timeline.
-   * @param {Object} params
-   * @param {Array<Object>} params.scenes - Scene specifications ({ id, sequence_number, duration_seconds })
-   * @param {number} [params.samplesPerScene=5]
-   * @returns {Array<Object>} Array of scene sample plans with local and absolute timeline timestamps
-   */
+    // Plan frame sampling for multiple sequential scenes across a composite timeline.
   static sampleTimelineScenes({ scenes = [], samplesPerScene = DEFAULT_FRAMES_PER_SCENE } = {}) {
     if (!Array.isArray(scenes) || scenes.length === 0) {
       return [];

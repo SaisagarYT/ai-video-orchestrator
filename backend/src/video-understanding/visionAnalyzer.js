@@ -6,11 +6,7 @@ export class VisionAnalyzer {
     this.analyzer = options.sceneAnalyzer || sceneAnalyzer;
   }
 
-  /**
-   * Group extracted frames by sceneId or sceneIndex.
-   * @param {Array<Object>} frames
-   * @returns {Map<string, Array<Object>>}
-   */
+  // Group extracted frames by sceneId or sceneIndex
   groupFramesByScene(frames = []) {
     const map = new Map();
     for (const frame of frames) {
@@ -23,16 +19,7 @@ export class VisionAnalyzer {
     return map;
   }
 
-  /**
-   * Analyze all scenes in a video and synthesize overall multimodal findings.
-   * @param {Object} params
-   * @param {Array<Object>} params.scenes - Scene specifications
-   * @param {Array<Object>} params.frames - All extracted video frames
-   * @param {Object} [params.creativeBible]
-   * @param {Object} [params.brandContext]
-   * @param {Object} [params.options]
-   * @returns {Promise<Object>} Aggregated video understanding results
-   */
+    // Analyze all scenes in a video and synthesize overall multimodal findings.
   async analyzeVideo({ scenes = [], frames = [], creativeBible = {}, brandContext = {}, options = {} }) {
     const framesByScene = this.groupFramesByScene(frames);
     const sceneResults = [];

@@ -3,15 +3,8 @@ import { TimelineIRSchema } from '../services/timeline/timeline.schema.js';
 import { AppError } from '../core/errors/AppError.js';
 
 export class TimelineAdaptationTransformer {
-  /**
-   * Deterministically transform canonical Timeline IR into a platform-specific Timeline IR variant.
-   * Canonical Timeline IR is NEVER mutated.
-   *
-   * @param {object} params
-   * @param {object} params.canonicalTimeline - Canonical Timeline IR (source)
-   * @param {import('./types.js').AdaptationPlan} params.adaptationPlan - Adaptation plan
-   * @returns {object} New, independent Timeline IR conforming to TimelineIRSchema
-   */
+  // Deterministically transform canonical Timeline IR into a platform-specific Timeline IR variant.
+  // Canonical Timeline IR is NEVER mutated.
   static transformTimeline({ canonicalTimeline, adaptationPlan }) {
     if (!canonicalTimeline || !canonicalTimeline.tracks) {
       throw AppError.badRequest('Canonical Timeline IR is required for transformation');

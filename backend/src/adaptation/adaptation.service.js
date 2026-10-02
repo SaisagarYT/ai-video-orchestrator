@@ -29,13 +29,7 @@ export class AdaptationService {
     this.profiles = options.profiles || platformProfileRegistry;
   }
 
-  /**
-   * Verify authenticated user owns the campaign's business.
-   *
-   * @param {string} campaignId
-   * @param {string} userId
-   * @returns {Promise<object>} Campaign record
-   */
+  // Verify authenticated user owns the campaign's business
   async verifyCampaignOwnership(campaignId, userId) {
     if (!campaignId) throw new NotFoundError('Campaign ID is required');
 
@@ -56,20 +50,7 @@ export class AdaptationService {
     return campaign;
   }
 
-  /**
-   * Create an adaptation plan and transformed timeline for a target platform.
-   *
-   * @param {object} params
-   * @param {string} params.campaignId
-   * @param {string} [params.workflowExecutionId]
-   * @param {string} [params.sourceTimelineId]
-   * @param {string} params.platform
-   * @param {string} [params.profileVersion='v1']
-   * @param {object} [params.options]
-   * @param {string} [params.idempotencyKey]
-   * @param {object} [params.user]
-   * @returns {Promise<object>} Created adaptation record
-   */
+  // Create an adaptation plan and transformed timeline for a target platform
   async createAdaptation({
     campaignId,
     workflowExecutionId = null,
@@ -261,16 +242,7 @@ export class AdaptationService {
     return adaptationRecord;
   }
 
-  /**
-   * Execute rendering and evaluation for an existing adaptation.
-   *
-   * @param {string} adaptationId
-   * @param {object} params
-   * @param {object} [params.user]
-   * @param {boolean} [params.runRender=true]
-   * @param {boolean} [params.runEvaluation=true]
-   * @returns {Promise<object>}
-   */
+  // Execute rendering and evaluation for an existing adaptation
   async executeAdaptation(adaptationId, { user = null, runRender = true, runEvaluation = true } = {}) {
     const adaptation = await this.repo.getAdaptationById(adaptationId);
     await this.verifyCampaignOwnership(adaptation.campaign_id, user?.id);
@@ -399,19 +371,7 @@ export class AdaptationService {
     return await this.repo.getAdaptationById(adaptationId);
   }
 
-  /**
-   * Bulk create adaptations for multiple target platforms.
-   * Returns 202 Accepted semantics with created records.
-   *
-   * @param {object} params
-   * @param {string} params.campaignId
-   * @param {Array<string>} params.platforms
-   * @param {string} [params.sourceTimelineId]
-   * @param {object} [params.options]
-   * @param {string} [params.idempotencyKey]
-   * @param {object} [params.user]
-   * @returns {Promise<{ accepted: boolean, count: number, adaptations: Array<object> }>}
-   */
+  // Bulk create adaptations for multiple target platforms (202 Accepted semantics)
   async bulkCreateAdaptations({
     campaignId,
     platforms = [],
@@ -453,26 +413,20 @@ export class AdaptationService {
     };
   }
 
-  /**
-   * Retrieve single adaptation.
-   */
+  // Retrieve single adaptation
   async getAdaptation(id, user = null) {
     const adaptation = await this.repo.getAdaptationById(id);
     await this.verifyCampaignOwnership(adaptation.campaign_id, user?.id);
     return adaptation;
   }
 
-  /**
-   * List adaptations for a campaign.
-   */
+  // List adaptations for a campaign
   async listAdaptations(campaignId, user = null, filters = {}) {
     await this.verifyCampaignOwnership(campaignId, user?.id);
     return await this.repo.listAdaptationsByCampaign(campaignId, filters);
   }
 
-  /**
-   * Cancel an adaptation.
-   */
+  // Cancel an adaptation
   async cancelAdaptation(id, user = null, reason = 'Cancelled by user') {
     const adaptation = await this.repo.getAdaptationById(id);
     await this.verifyCampaignOwnership(adaptation.campaign_id, user?.id);
@@ -487,17 +441,7 @@ export class AdaptationService {
     });
   }
 
-  /**
-   * Execute bounded revision loop for an adaptation that received a WARNING or failed validation/evaluation.
-   * Priority: 1. layout/timeline correction, 2. crop reposition, 3. subtitle/CTA reposition.
-   * Bounded by maxAttempts.
-   *
-   * @param {string} adaptationId
-   * @param {object} params
-   * @param {object} [params.user]
-   * @param {number} [params.maxAttempts=2]
-   * @returns {Promise<object>}
-   */
+  // Execute bounded revision loop for an adaptation that received a WARNING or failed validation/evaluation
   async reviseAdaptation(adaptationId, { user = null, maxAttempts = 2 } = {}) {
     const adaptation = await this.repo.getAdaptationById(adaptationId);
     await this.verifyCampaignOwnership(adaptation.campaign_id, user?.id);
@@ -544,10 +488,7 @@ export class AdaptationService {
     return await this.executeAdaptation(adaptationId, { user, runRender: true, runEvaluation: true });
   }
 
-
-  /**
-   * Transition status with centralized state machine validation.
-   */
+  // Transition status with centralized state machine validation
   async transitionStatus(adaptationId, targetStatus) {
     const current = await this.repo.getAdaptationById(adaptationId);
     const validNext = VALID_STATUS_TRANSITIONS[current.status] || [];

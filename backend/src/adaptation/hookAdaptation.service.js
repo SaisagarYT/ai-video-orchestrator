@@ -1,13 +1,5 @@
 export class HookAdaptationService {
-  /**
-   * Analyze the opening of the canonical creative and generate hook adaptation instructions.
-   *
-   * @param {object} params
-   * @param {object} params.firstScene - Canonical opening scene object
-   * @param {import('./types.js').PlatformProfile} params.profile - Target platform profile
-   * @param {object} [params.creativeMemory] - Creative memory pattern reference
-   * @returns {object} Hook adaptation instruction
-   */
+  // Analyze the opening scene and generate platform hook adaptation instructions
   static planHookAdaptation({ firstScene, profile, creativeMemory = null }) {
     if (!firstScene) {
       return {

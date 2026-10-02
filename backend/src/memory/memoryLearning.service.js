@@ -8,18 +8,7 @@ import {
 } from './memory.constants.js';
 
 export class MemoryLearningService {
-  /**
-   * Conservatively propose candidate memory items from Slice 7 prompt repairs.
-   * New items remain in PENDING_REVIEW status until explicitly approved by the user.
-   *
-   * @param {object} params
-   * @param {string} params.businessId
-   * @param {string} params.campaignId
-   * @param {string} params.executionId
-   * @param {Array<object>} params.targets - Revised scene targets
-   * @param {object} [params.plan]
-   * @returns {Promise<Array<object>>} Created candidate items
-   */
+  // Propose candidate memory items from prompt repairs (starts in PENDING_REVIEW status)
   async proposeRevisionCandidates({ businessId, campaignId, executionId, targets = [], plan = null }) {
     if (!businessId || !targets.length) return [];
 
@@ -110,16 +99,7 @@ export class MemoryLearningService {
     return candidates;
   }
 
-  /**
-   * Conservatively propose candidate memory items from Slice 8 visual defects.
-   *
-   * @param {object} params
-   * @param {string} params.businessId
-   * @param {string} params.campaignId
-   * @param {string} params.executionId
-   * @param {Array<object>} params.detectedIssues - Issues detected by vision analyzer
-   * @returns {Promise<Array<object>>} Created candidate items
-   */
+  // Propose candidate memory items from detected visual defects
   async proposeVisionCandidates({ businessId, campaignId, executionId, detectedIssues = [] }) {
     if (!businessId || !detectedIssues.length) return [];
 
@@ -200,9 +180,7 @@ export class MemoryLearningService {
     return candidates;
   }
 
-  /**
-   * Explicitly approve a candidate memory item into an ACTIVE rule.
-   */
+  // Explicitly approve a candidate memory item into an ACTIVE rule
   async approveCandidate({ businessId, userId, memoryId, type = null, priority = null }) {
     const existing = await memoryRepository.getBrandMemoryItem(memoryId);
     if (existing.business_id !== businessId) {

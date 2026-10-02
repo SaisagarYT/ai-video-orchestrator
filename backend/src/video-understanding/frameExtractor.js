@@ -24,11 +24,7 @@ export class FrameExtractor {
     }
   }
 
-  /**
-   * Create an isolated temporary directory for extracted frames.
-   * @param {string} [baseDir]
-   * @returns {string} Absolute path to created temporary directory
-   */
+    // Create an isolated temporary directory for extracted frames.
   createTempDirectory(baseDir = null) {
     const parentDir = baseDir || os.tmpdir();
     const dirName = `aio-vision-${crypto.randomUUID()}`;
@@ -37,10 +33,7 @@ export class FrameExtractor {
     return fullPath;
   }
 
-  /**
-   * Remove temporary directory and all contents safely.
-   * @param {string} tempDir
-   */
+  // Remove temporary directory and all contents safely
   cleanup(tempDir) {
     if (!tempDir || typeof tempDir !== 'string') return;
     try {
@@ -52,14 +45,7 @@ export class FrameExtractor {
     }
   }
 
-  /**
-   * Extract frames from a video according to a scene sampling plan.
-   * @param {Object} params
-   * @param {string} params.videoPath - Path or URL to target video
-   * @param {Array<Object>} params.samplingPlan - Output of FrameSampler.sampleTimelineScenes
-   * @param {string} [params.tempDir] - Optional specific directory
-   * @returns {Promise<Array<Object>>} Extracted frames metadata conforming to FrameMetadataSchema
-   */
+    // Extract frames from a video according to a scene sampling plan.
   async extractFrames({ videoPath, samplingPlan = [], tempDir = null }) {
     if (!videoPath) {
       throw new FrameExtractionError('Video path or URL is required for frame extraction');

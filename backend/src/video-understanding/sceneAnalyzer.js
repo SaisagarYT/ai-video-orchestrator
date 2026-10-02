@@ -8,16 +8,7 @@ export class SceneAnalyzer {
     this.providerName = options.providerName || null;
   }
 
-  /**
-   * Analyze extracted frames for a single scene against expected specification.
-   * @param {Object} params
-   * @param {Object} params.scene - Scene specification
-   * @param {Array<Object>} params.frames - Extracted frames for this scene
-   * @param {Object} [params.creativeBible] - Creative Bible rules
-   * @param {Object} [params.brandContext] - Campaign / brand details
-   * @param {Object} [params.options] - Optional overrides (provider, scenario)
-   * @returns {Promise<Object>} Validated SceneVisionResult
-   */
+    // Analyze extracted frames for a single scene against expected specification.
   async analyzeScene({ scene, frames = [], creativeBible = {}, brandContext = {}, options = {} }) {
     if (!scene) {
       throw new VisionAnalysisError('Expected scene specification is required for scene vision analysis');

@@ -2,17 +2,8 @@ import { logger } from '../core/logger/logger.js';
 import { MEMORY_CONFLICT_RESOLUTIONS } from './memory.constants.js';
 
 export class MemoryConflictService {
-  /**
-   * Detect and resolve conflicts between brand memory items and explicit campaign requirements.
-   * Explicit campaign instructions always win for the current execution,
-   * without mutating the persistent brand memory.
-   *
-   * @param {object} params
-   * @param {string} params.businessId
-   * @param {object} params.campaign
-   * @param {Array<object>} params.brandMemoryItems
-   * @returns {Array<object>} Detected conflicts
-   */
+  // Detect and resolve conflicts between brand memory items and explicit campaign requirements.
+  // Explicit campaign instructions always win for the current execution without mutating persistent memory.
   detectAndResolveConflicts({ businessId, campaign = {}, brandMemoryItems = [] }) {
     const conflicts = [];
     const campaignId = campaign.id || null;
